@@ -48,6 +48,3 @@ jobs:
           tags: |
             ghcr.io/${{ env.REPOSITORY_OWNER }}/${{ env.IMAGE_NAME }}:latest
             ghcr.io/${{ env.REPOSITORY_OWNER }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-          build-args: |
-            DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}
-            DISCORD_USER_ID=${{ secrets.DISCORD_USER_ID }}

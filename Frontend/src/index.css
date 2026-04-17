@@ -1,0 +1,213 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+/* ####################################################################### */
+/* Root Variables */
+:root {
+  --bg: #0f1117;
+  --bg-card: #181b24;
+  --bg-alt: #1e2230;
+  --border: rgba(255, 255, 255, 0.06);
+  --tx1: #e8eaed;
+  --tx2: #9aa0ab;
+  --tx3: #5f6673;
+  --c-fuji: #E8943A;
+  --c-rla: #4A90D9;
+  --c-nieto: #2ECDA7;
+  --c-belm: #B07CD8;
+  --c-sanch: #E04848;
+  --c-fuji-bg: rgba(232, 148, 58, 0.15);
+  --c-rla-bg: rgba(74, 144, 217, 0.15);
+  --c-nieto-bg: rgba(46, 205, 167, 0.15);
+  --c-belm-bg: rgba(176, 124, 216, 0.15);
+  --c-sanch-bg: rgba(224, 72, 72, 0.15);
+  --radius: 10px;
+}
+
+/* ####################################################################### */
+/* Base */
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--tx1);
+  margin: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ####################################################################### */
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+
+/* ####################################################################### */
+/* Animations */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(46, 205, 167, 0.5); }
+  50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(46, 205, 167, 0); }
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 8px 0 var(--glow-color, transparent); }
+  50% { box-shadow: 0 0 20px 4px var(--glow-color, transparent); }
+}
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-up { animation: fadeUp 0.5s ease forwards; }
+.animate-fade-in { animation: fadeIn 0.4s ease forwards; }
+.animate-slide-left { animation: slideInLeft 0.4s ease forwards; }
+.animate-count-up { animation: countUp 0.3s ease forwards; }
+.animate-glow { animation: glowPulse 2s ease-in-out infinite; }
+.live-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--c-nieto);
+  animation: livePulse 2s ease-in-out infinite;
+}
+
+/* Staggered animation delays for cards */
+.stagger-1 { animation-delay: 0.05s; opacity: 0; }
+.stagger-2 { animation-delay: 0.1s; opacity: 0; }
+.stagger-3 { animation-delay: 0.15s; opacity: 0; }
+.stagger-4 { animation-delay: 0.2s; opacity: 0; }
+.stagger-5 { animation-delay: 0.25s; opacity: 0; }
+
+/* ####################################################################### */
+/* Skeleton */
+.skeleton {
+  background: var(--bg-alt);
+  border-radius: 4px;
+  position: relative;
+  overflow: hidden;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.06), transparent);
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ####################################################################### */
+/*  */
+.dept-path {
+  stroke: #0f1117;
+  stroke-width: 0.5;
+  cursor: pointer;
+  transition: opacity 0.15s, stroke 0.15s;
+}
+.dept-path:hover {
+  opacity: 0.85;
+  stroke: #fff;
+  stroke-width: 1.5;
+}
+
+/* ####################################################################### */
+/* 404 Page - Animated Lines CSS */
+
+.background404 {
+  opacity: 0.15;
+  background: linear-gradient(135deg, #FFD700 0%, #FFA500 50%, #FF7B00 100%);
+}
+
+#home {
+  clip-path: url(#cache);
+}
+
+#red {
+  fill: none;
+  opacity: 0.5;
+  stroke: #FFD700;
+  stroke-width: 12;
+  stroke-miterlimit: 10;
+  animation: show 4s;
+  animation-fill-mode: forwards;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+#blue {
+  fill: none;
+  opacity: 0.5;
+  stroke: #FF7B00;
+  stroke-width: 12;
+  stroke-miterlimit: 10;
+  animation: show 4s;
+  animation-fill-mode: forwards;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+#light-blue {
+  fill: none;
+  opacity: 0.5;
+  stroke: #00ff9d;
+  stroke-width: 6;
+  stroke-miterlimit: 10;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 800;
+  animation: draw 4s;
+  animation-fill-mode: forwards;
+  animation-iteration-count: infinite;
+  animation-timing-function: ease-in-out;
+}
+
+@keyframes draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes show {
+  0% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+/* 404 Page Text Styles */
+.race-font {
+  font-family: 'DM Sans', sans-serif;
+}
+
+/* Make 404 content visible on dark background */
+.pt-20 .text-black {
+  color: var(--tx1);
+}
+
+.pt-20 .text-blue-700 {
+  color: var(--c-rla);
+  text-decoration: none;
+}
+
+.pt-20 .text-blue-700:hover {
+  color: var(--c-belm);
+  text-decoration: underline;
+}

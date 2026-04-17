@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import time
 from typing import Optional
 
@@ -29,6 +30,9 @@ _driver: Optional[webdriver.Chrome] = None
 
 def _build_driver() -> webdriver.Chrome:
     opts = Options()
+    chrome_bin = os.environ.get("CHROME_BIN")
+    if chrome_bin:
+        opts.binary_location = chrome_bin
     if SELENIUM_HEADLESS:
         opts.add_argument("--headless=new")
     opts.add_argument("--start-maximized")

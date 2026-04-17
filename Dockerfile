@@ -6,12 +6,20 @@ RUN npm install --legacy-peer-deps
 COPY Frontend/ ./
 RUN npm run build
 
-# 2: Final Image - Python + Nginx
+# 2: Final Image - Python + Nginx + Chromium
 FROM python:3.12-alpine
 WORKDIR /app
 
-# Install Nginx
-RUN apk add --no-cache nginx && rm -rf /var/cache/apk/*
+# Install Nginx + Chromium + ChromeDriver
+RUN apk add --no-cache \
+    nginx \
+    chromium \
+    chromium-chromedriver \
+    && rm -rf /var/cache/apk/*
+
+# Set Chrome env vars for Selenium
+ENV CHROME_BIN=/usr/bin/chromium-browser
+ENV CHROMEDRIVER_PATH=/usr/bin/chromedriver
 
 # Copy Frontend build to Nginx
 COPY --from=build-frontend /app/frontend/dist /usr/share/nginx/html

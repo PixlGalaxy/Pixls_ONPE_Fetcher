@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { ExternalLink } from 'lucide-react';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
 import MapPage from './pages/MapPage';
@@ -51,16 +52,44 @@ export default function App() {
           <Route path="/ubigeo" element={<UbigeoPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
-        <div className="text-center mt-8 pt-6 pb-5 text-[10px] border-t" style={{ color: 'var(--tx3)', borderColor: 'var(--border)' }}>
-          <div>ONPE Fetcher | Desarrollado por {' '}
+        <div className="text-center mt-8 pt-6 pb-5 text-[10px] border-t" style={{ color: 'var(--tx0)', borderColor: 'var(--border)' }}>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 flex-wrap">
+            <span className="font-semibold">PIXL's ONPE Fetcher</span>
+            <span>|</span>
+            <span>Developed By</span>
             <a
               href="https://github.com/PixlGalaxy"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:opacity-80 transition-opacity"
+              className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
               style={{ color: 'var(--c-rla)' }}
             >
               PixlGalaxy
+              <ExternalLink size={10} />
+            </a>
+            <span>|</span>
+            <span>© 2026</span>
+            <a
+              href="https://fabriziogamboa.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
+              style={{ color: 'var(--c-rla)' }}
+            >
+              Fabrizio Gamboa
+              <ExternalLink size={10} />
+            </a>
+            <span>|</span>
+            <span>Hosted On: </span>
+            <a
+              href="https://itzgalaxy.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
+              style={{ color: 'var(--c-rla)' }}
+            >
+              ItzGalaxy.com
+              <ExternalLink size={10} />
             </a>
           </div>
         </div>

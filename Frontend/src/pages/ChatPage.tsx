@@ -464,8 +464,8 @@ export default function ChatPage() {
             {busy ? <Loader2 size={15} className="animate-spin" /> : <Send size={15} />}
           </button>
         </div>
-        <p className="text-[10px] mt-1.5 text-center" style={{ color: 'var(--tx3)' }}>
-          Respuestas generadas por IA · Verifica datos críticos con fuentes oficiales del ONPE
+        <p className="text-[10px] mt-1.5 text-center" style={{ color: 'var(--tx0)' }}>
+          ZaylarAI Puede Cometer Errores · Verifica datos críticos con fuentes oficiales del ONPE 
         </p>
       </div>
     </div>

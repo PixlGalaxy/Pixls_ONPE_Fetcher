@@ -1,14 +1,50 @@
+import asyncio
+import json
 import logging
+import os
 import sys
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI, HTTPException, Query
+import httpx
+from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 
 import scheduler
 import storage
 import predictor
 from config import ELECTIONS
+from AI.rag import rag_engine
+
+load_dotenv(Path(__file__).parent / ".env")
+
+OLLAMA_URL: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
+LLM_MODEL: str = os.getenv("OLLAMA_LLM_MODEL", "llama3.2")
+
+SYSTEM_PROMPT = (
+    "Eres un asistente llamado Bit, experto en análisis electoral peruano para las elecciones de 2026. "
+    "Tienes acceso a datos en tiempo real del ONPE (Oficina Nacional de Procesos Electorales). "
+    "Zona horaria: América/Lima (UTC-5, Perú). Usa esta zona para interpretar fechas y horas. "
+    "Respondes SIEMPRE en español, de forma precisa, concisa y objetiva. "
+    "No inventes cifras; si no tienes datos suficientes, indícalo claramente.\n\n"
+    "REGLAS CRÍTICAS PARA INTERPRETAR LOS DATOS:\n"
+    "1. El bloque 'RESULTADOS ACTUALES PRESIDENCIALES' contiene el RANKING NACIONAL OFICIAL y DEFINITIVO. "
+    "Este ranking prevalece siempre sobre cualquier dato regional o provincial.\n"
+    "2. Los datos por DEPARTAMENTO o PROVINCIA reflejan resultados LOCALES que pueden diferir "
+    "del ranking nacional. Un candidato puede liderar en una región y ser 5to nacionalmente.\n"
+    "3. Usa SIEMPRE el ranking nacional para afirmaciones sobre posiciones (1ro, 2do, 3ro, etc.). "
+    "Solo usa datos regionales cuando la pregunta sea específicamente sobre una región.\n"
+    "4. No confundas posición regional con posición nacional.\n"
+    "5. El bloque 'PREDICCIÓN MONTE CARLO PRESIDENCIAL' contiene resultados de simulación estadística real "
+    "con miles de escenarios. Cuando el usuario pregunte sobre probabilidades, chances o predicciones, "
+    "DEBES usar los campos 'Prob.posición' (P(#2), P(#3), etc.) de ese bloque como respuesta directa. "
+    "NUNCA digas que no tienes datos de simulación si ese bloque está presente en el contexto. "
+    "NUNCA hagas tu propio análisis de escenarios cuando ya tienes probabilidades calculadas.\n\n"
+    "DATOS ELECTORALES ACTUALES (recuperados por búsqueda semántica RAG):\n{context}"
+)
 
 # ── Logging ────────────────────────────────────────────────────────────────
 logging.basicConfig(
@@ -24,10 +60,24 @@ logger = logging.getLogger(__name__)
 
 # ── Lifespan (startup / shutdown) ─────────────────────────────────────────
 
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessage]
+
+
+def _sse(payload: dict) -> str:
+    return f"data: {json.dumps(payload, ensure_ascii=False)}\n\n"
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Backend starting up…")
     scheduler.start()
+    asyncio.create_task(rag_engine.initialize())
     yield
     logger.info("Backend shutting down…")
     scheduler.stop()
@@ -58,6 +108,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ── LLM origin guard - CORS ──────────────────────────────────────────────────────
+
+_LLM_ALLOWED_ORIGINS = {
+    "https://devapp.zaylar.com",
+    "https://itzgalaxy.com",
+    "http://localhost:5173",
+    "http://localhost:5000",
+}
+
+
+async def _require_llm_origin(origin: str | None = Header(default=None)) -> None:
+    if origin not in _LLM_ALLOWED_ORIGINS:
+        raise HTTPException(status_code=403, detail="Origin not allowed")
 
 
 # ── Utility ───────────────────────────────────────────────────────────────
@@ -237,4 +302,100 @@ def run_prediction_now():
     return result
 
 
+# ── LLM Chat (Ollama + RAG, SSE streaming) ───────────────────────────────
+# YEAH, I LOVE OLLAMA <3 - PIXL
+@app.post("/LLM", dependencies=[Depends(_require_llm_origin)])
+async def llm_chat(request: Request, body: ChatRequest):
+    """Chat con el modelo LLM local (Ollama) usando RAG sobre datos electorales."""
+
+    async def generate():
+        ollama_client = httpx.AsyncClient(
+            timeout=None,
+            limits=httpx.Limits(max_keepalive_connections=0, max_connections=1),
+        )
+        cancel_task: asyncio.Task | None = None
+
+        async def _cancel_on_disconnect() -> None:
+            while True:
+                await asyncio.sleep(0.4)
+                if await request.is_disconnected():
+                    logger.info("[LLM] Cliente desconectado → abortando generación en Ollama")
+                    await ollama_client.aclose()
+                    return
+
+        try:
+            yield _sse({"type": "status", "status": "loading_model"})
+
+            last_user = next(
+                (m.content for m in reversed(body.messages) if m.role == "user"), ""
+            )
+            context = await rag_engine.get_context(last_user, k=8)
+
+            if await request.is_disconnected():
+                logger.info("[LLM] Cliente desconectado antes de llamar a Ollama")
+                return
+
+            system_content = SYSTEM_PROMPT.format(context=context)
+            messages = [{"role": "system", "content": system_content}] + [
+                {"role": m.role, "content": m.content} for m in body.messages
+            ]
+
+            cancel_task = asyncio.create_task(_cancel_on_disconnect())
+
+            first_chunk = True
+            stream_done = False
+
+            async with ollama_client.stream(
+                "POST",
+                f"{OLLAMA_URL}/api/chat",
+                headers={"Connection": "close"},
+                json={"model": LLM_MODEL, "messages": messages, "stream": True,
+                      "keep_alive": "2m", "think": True},
+            ) as resp:
+                resp.raise_for_status()
+                async for line in resp.aiter_lines():
+                    if not line.strip():
+                        continue
+                    chunk = json.loads(line)
+                    if first_chunk:
+                        yield _sse({"type": "status", "status": "model_loaded"})
+                        yield _sse({"type": "status", "status": "inference"})
+                        first_chunk = False
+                    content = chunk.get("message", {}).get("content", "")
+                    if content:
+                        yield _sse({"type": "token", "content": content})
+                    if chunk.get("done"):
+                        stream_done = True
+                        break
+
+            await ollama_client.aclose()
+            logger.debug("[LLM] Conexión Ollama cerrada tras done:true")
+
+            if stream_done:
+                yield _sse({"type": "done"})
+                return
+
+        except (httpx.RemoteProtocolError, httpx.ReadError, httpx.StreamClosed):
+            logger.info("[LLM] Stream Ollama interrumpido por desconexión del cliente")
+        except Exception as exc:
+            logger.error("[LLM] Error: %s", exc)
+            try:
+                yield _sse({"type": "error", "message": str(exc)})
+            except Exception:
+                pass
+        finally:
+            await ollama_client.aclose()
+            if cancel_task:
+                cancel_task.cancel()
+                try:
+                    await cancel_task
+                except asyncio.CancelledError:
+                    pass
+            logger.debug("[LLM] ollama_client cerrado")
+
+    return StreamingResponse(
+        generate(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 

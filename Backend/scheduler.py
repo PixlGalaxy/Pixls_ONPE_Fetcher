@@ -9,6 +9,7 @@ import fetcher
 import processor
 import storage
 import predictor
+from AI.rag import rag_engine
 from config import (
     DEPARTMENTS,
     ELECTIONS,
@@ -207,6 +208,7 @@ def _scheduler_loop() -> None:
                         current_pct,
                     )
                     _full_refresh()
+                    rag_engine.trigger_rebuild()
                     with _lock:
                         _last_known_pct = current_pct
                         _last_change_time = datetime.now(timezone.utc)
@@ -279,6 +281,7 @@ def trigger_now() -> None:
     logger.info("[SCHEDULER] Manual refresh triggered.")
     try:
         _full_refresh()
+        rag_engine.trigger_rebuild()
         pct = _quick_check_presidential_pct()
         with _lock:
             global _last_known_pct

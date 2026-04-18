@@ -385,8 +385,7 @@ export default function ChatPage() {
       >
         <div className="min-w-[140px]">
           <h1 className="text-lg font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--tx1)' }}>
-            <MessageSquare size={20} style={{ color: '#4A90D9' }} />
-            Asistente Electoral
+            Asistente Electoral 
           </h1>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--tx3)' }}>
             ZaylarAI | Todos los mensajes se guardan localmente como cookies en tu navegador

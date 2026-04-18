@@ -263,7 +263,6 @@ export default function APIPage() {
       {/* Hero Section */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4 flex items-center justify-center gap-3" style={{ color: 'var(--tx1)' }}>
-          <Code2 size={36} />
           API Documentation
         </h1>
         <p className="text-lg mb-6" style={{ color: 'var(--tx2)' }}>

@@ -144,7 +144,6 @@ export default function PrediccionPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap pt-5 pb-3 border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="min-w-[140px]">
           <h1 className="text-lg font-bold tracking-tight flex items-center gap-2" style={{ color: 'var(--tx1)' }}>
-            <Target size={20} style={{ color: 'var(--c-rla)' }} />
             Predicción Electoral
           </h1>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--tx3)' }}>

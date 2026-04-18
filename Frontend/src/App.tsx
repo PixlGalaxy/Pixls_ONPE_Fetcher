@@ -6,6 +6,9 @@ import MapPage from './pages/MapPage';
 import CandidatosPage from './pages/CandidatosPage';
 import HistorialPage from './pages/HistorialPage';
 import PrediccionPage from './pages/PrediccionPage';
+import AboutPage from './pages/AboutPage';
+import APIPage from './pages/APIPage';
+import UbigeoPage from './pages/UbigeoPage';
 import NotFound from './pages/NotFound';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -14,6 +17,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/candidatos': 'Candidatos',
   '/prediccion': 'Predicción',
   '/historial': 'Historial',
+  '/about': 'Acerca de',
+  '/API_DOCS': 'API Documentation',
+  '/ubigeo': 'Códigos UBIGEO',
 };
 
 function TitleUpdater() {
@@ -36,7 +42,10 @@ export default function App() {
           <Route path="/mapa" element={<MapPage />} />
           <Route path="/candidatos" element={<CandidatosPage />} />
           <Route path="/prediccion" element={<PrediccionPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="/historial" element={<HistorialPage />} />
+          <Route path="/API_DOCS" element={<APIPage />} />
+          <Route path="/ubigeo" element={<UbigeoPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <div className="text-center mt-8 pt-6 pb-5 text-[10px] border-t" style={{ color: 'var(--tx3)', borderColor: 'var(--border)' }}>

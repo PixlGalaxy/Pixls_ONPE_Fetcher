@@ -26,7 +26,6 @@ function loadSavedMessages(): Message[] | null {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Message[];
-    // Filtra burbujas de asistente vacías que puedan haber quedado de un stream interrumpido
     const filtered = parsed.filter(m => !(m.role === 'assistant' && !m.content.trim()));
     return filtered.length > 0 ? filtered : null;
   } catch {
@@ -49,11 +48,11 @@ function clearSavedMessages(): void {
 /* ── Status badge ───────────────────────────────────────────────────────── */
 
 const STATUS_CFG: Record<ModelStatus, { label: string; color: string; icon: JSX.Element }> = {
-  idle:          { label: 'Listo',            color: 'var(--tx3)', icon: <MessageSquare size={11} /> },
+  idle:          { label: 'Listo',            color: '#45e5f3', icon: <MessageSquare size={11} /> },
   loading_model: { label: 'Cargando modelo en Zaylar…', color: '#E6B41A',    icon: <Loader2 size={11} className="animate-spin" /> },
-  model_loaded:  { label: 'Modelo listo',     color: '#22c55e',    icon: <CheckCircle2 size={11} /> },
+  model_loaded:  { label: 'Modelo Listo',     color: '#22c55e',    icon: <CheckCircle2 size={11} /> },
   inference:     { label: 'Generando…',       color: '#4A90D9',    icon: <Zap size={11} /> },
-  streaming:     { label: 'Transmitiendo…',   color: '#4A90D9',    icon: <Radio size={11} /> },
+  streaming:     { label: 'Stremeando',   color: '#4A90D9',    icon: <Radio size={11} /> },
   done:          { label: 'Completado',       color: '#22c55e',    icon: <CheckCircle2 size={11} /> },
   error:         { label: 'Error',            color: '#E04848',    icon: <AlertTriangle size={11} /> },
 };
@@ -390,7 +389,7 @@ export default function ChatPage() {
             Asistente Electoral
           </h1>
           <p className="text-[11px] mt-0.5" style={{ color: 'var(--tx3)' }}>
-            LLM local con RAG · datos ONPE en tiempo real
+            ZaylarAI | Todos los mensajes se guardan localmente como cookies en tu navegador
           </p>
         </div>
 

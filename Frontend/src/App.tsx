@@ -35,6 +35,53 @@ function TitleUpdater() {
   return null;
 }
 
+function Footer() {
+  const { pathname } = useLocation();
+  if (pathname === '/chat') return null;
+  return (
+    <div className="text-center mt-8 pt-6 pb-5 text-[10px] border-t" style={{ color: 'var(--tx0)', borderColor: 'var(--border)' }}>
+      <div className="font-semibold mb-1.5">PIXL's ONPE Fetcher</div>
+      <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-1">
+        <span>Developed By</span>
+        <a
+          href="https://github.com/PixlGalaxy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
+          style={{ color: 'var(--c-rla)' }}
+        >
+          PixlGalaxy
+          <ExternalLink size={10} />
+        </a>
+        <span className="opacity-30 hidden sm:inline">|</span>
+        <span>© 2026</span>
+        <a
+          href="https://fabriziogamboa.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
+          style={{ color: 'var(--c-rla)' }}
+        >
+          Fabrizio Gamboa
+          <ExternalLink size={10} />
+        </a>
+        <span className="opacity-30 hidden sm:inline">|</span>
+        <span>Hosted On:</span>
+        <a
+          href="https://itzgalaxy.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
+          style={{ color: 'var(--c-rla)' }}
+        >
+          ItzGalaxy.com
+          <ExternalLink size={10} />
+        </a>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -55,46 +102,7 @@ export default function App() {
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
-        <div className="text-center mt-8 pt-6 pb-5 text-[10px] border-t" style={{ color: 'var(--tx0)', borderColor: 'var(--border)' }}>
-          <div className="font-semibold mb-1.5">PIXL's ONPE Fetcher</div>
-          <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-1">
-            <span>Developed By</span>
-            <a
-              href="https://github.com/PixlGalaxy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
-              style={{ color: 'var(--c-rla)' }}
-            >
-              PixlGalaxy
-              <ExternalLink size={10} />
-            </a>
-            <span className="opacity-30 hidden sm:inline">|</span>
-            <span>© 2026</span>
-            <a
-              href="https://fabriziogamboa.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
-              style={{ color: 'var(--c-rla)' }}
-            >
-              Fabrizio Gamboa
-              <ExternalLink size={10} />
-            </a>
-            <span className="opacity-30 hidden sm:inline">|</span>
-            <span>Hosted On:</span>
-            <a
-              href="https://itzgalaxy.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 hover:opacity-70 transition-opacity"
-              style={{ color: 'var(--c-rla)' }}
-            >
-              ItzGalaxy.com
-              <ExternalLink size={10} />
-            </a>
-          </div>
-        </div>
+        <Footer />
       </div>
     </BrowserRouter>
   );

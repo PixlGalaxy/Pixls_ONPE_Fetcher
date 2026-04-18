@@ -50,7 +50,7 @@ function clearSavedMessages(): void {
 
 const STATUS_CFG: Record<ModelStatus, { label: string; color: string; icon: JSX.Element }> = {
   idle:          { label: 'Listo',            color: '#45e5f3', icon: <MessageSquare size={11} /> },
-  loading_model: { label: 'Cargando modelo en Zaylar…', color: '#E6B41A',    icon: <Loader2 size={11} className="animate-spin" /> },
+  loading_model: { label: 'Cargando Modelo En Zaylar…', color: '#E6B41A',    icon: <Loader2 size={11} className="animate-spin" /> },
   model_loaded:  { label: 'Modelo Listo',     color: '#22c55e',    icon: <CheckCircle2 size={11} /> },
   inference:     { label: 'Generando…',       color: '#4A90D9',    icon: <Zap size={11} /> },
   streaming:     { label: 'Stremeando',   color: '#4A90D9',    icon: <Radio size={11} /> },
@@ -190,7 +190,7 @@ function MessageBubble({ message }: { message: Message }) {
 
       {/* Bubble */}
       <div
-        className="max-w-[82%] px-3.5 py-2.5 text-[13px]"
+        className="max-w-[82%] md:max-w-[72%] lg:max-w-[62%] px-3.5 py-2.5 text-[13px]"
         style={
           isUser
             ? {
@@ -377,7 +377,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100dvh - 180px)', minHeight: '400px' }}>
+    <div className="flex flex-col" style={{ height: 'calc(100dvh - 110px)', minHeight: '420px' }}>
 
       {/* ══════════ Header ══════════ */}
       <div

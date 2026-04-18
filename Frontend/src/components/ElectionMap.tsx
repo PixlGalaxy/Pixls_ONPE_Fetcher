@@ -52,10 +52,10 @@ function ensureStyles() {
   const style = document.createElement('style');
   style.id = STYLE_ID;
   style.textContent = `
-    @keyframes puzzlePiece {
-      0%   { opacity:0; transform: scale(.6) rotate(-8deg) }
-      60%  { opacity:1; transform: scale(1.03) rotate(1deg) }
-      100% { opacity:.85; transform: scale(1) rotate(0) }
+    @keyframes mapFall {
+      0%   { opacity: 0; transform: translateY(-40px) scaleY(.7) }
+      65%  { opacity: 1; transform: translateY(7px)   scaleY(1.07) }
+      100% { opacity: .85; transform: translateY(0)   scaleY(1) }
     }
     @keyframes fadeUp {
       from { opacity:0; transform: translateY(4px) }
@@ -64,8 +64,10 @@ function ensureStyles() {
     .dept-path {
       stroke: #0f1117; stroke-width: .5;
       cursor: pointer; transition: opacity .15s, stroke .15s;
-      opacity: 0; transform-origin: center;
-      animation: puzzlePiece .6s cubic-bezier(.34,1.56,.64,1) forwards;
+      opacity: 0;
+      transform-box: fill-box;
+      transform-origin: center;
+      animation: mapFall .65s cubic-bezier(.34,1.4,.64,1) forwards;
     }
     .dept-path:hover { opacity: .85; stroke: #fff; stroke-width: 1.5 }
     .dept-label { opacity: 0; animation: fadeUp .4s ease forwards }
@@ -136,7 +138,10 @@ export default function ElectionMap({ regions, abroad, onRegionClick }: Election
     const d = pathGen(f.geometry as GeoPermissibleObjects) ?? '';
     const centroid = geoCentroid(f as GeoPermissibleObjects);
     const projected = projection(centroid as [number, number]);
-    return { name, ubigeo, d, cx: projected?.[0] ?? 0, cy: projected?.[1] ?? 0, i };
+    const cx = projected?.[0] ?? 0;
+    const cy = projected?.[1] ?? 0;
+    const delay = Math.round((cx / W * 0.35 + cy / H * 0.65) * 900);
+    return { name, ubigeo, d, cx, cy, i, delay };
   });
 
   const ext = abroad;
@@ -147,13 +152,13 @@ export default function ElectionMap({ regions, abroad, onRegionClick }: Election
     <div className="relative w-full" style={{ aspectRatio: `${W}/${H}` }}>
       <svg ref={svgRef} viewBox={`0 0 ${W} ${H}`} className="w-full h-full" preserveAspectRatio="xMidYMid meet">
         {/* Department paths */}
-        {featureData.map(({ name, ubigeo, d, i }) => (
+        {featureData.map(({ name, ubigeo, d, i, delay }) => (
           <path
             key={ubigeo || `f-${i}`}
             d={d}
             fill={getRegionColor(ubigeo)}
             className="dept-path"
-            style={{ animationDelay: `${i * 60}ms` }}
+            style={{ animationDelay: `${delay}ms` }}
             onMouseMove={(e) => handleMouseMove(e, name)}
             onMouseLeave={() => setTooltip(null)}
             onClick={() => {
@@ -165,21 +170,21 @@ export default function ElectionMap({ regions, abroad, onRegionClick }: Election
 
         {/* Department % labels */}
         <g className="dept-labels">
-          {featureData.map(({ name, ubigeo, cx, cy, i }) => {
+          {featureData.map(({ name, ubigeo, cx, cy, delay }) => {
             const regionData = regions[ubigeo];
             const pct = regionData?.actas?.actas_contabilizadas_pct;
             if (pct == null) return null;
 
             const pctText = Math.round(pct) + '%';
             const small = SMALL_DEPTS[name];
-            const delay = `${i * 60 + 400}ms`;
+            const labelDelay = `${delay + 200}ms`;
             const fontSize = 8.5;
 
             if (small) {
               const tx = cx + small.dx;
               const ty = cy + small.dy;
               return (
-                <g key={`lbl-${ubigeo}`} className="dept-label" style={{ animationDelay: delay }}>
+                <g key={`lbl-${ubigeo}`} className="dept-label" style={{ animationDelay: labelDelay }}>
                   <line
                     x1={cx} y1={cy} x2={tx} y2={ty}
                     stroke="rgba(255,255,255,.4)" strokeWidth={0.7}
@@ -203,7 +208,7 @@ export default function ElectionMap({ regions, abroad, onRegionClick }: Election
               <text
                 key={`lbl-${ubigeo}`}
                 className="dept-label"
-                style={{ animationDelay: delay }}
+                style={{ animationDelay: labelDelay }}
                 x={cx} y={cy + 3}
                 textAnchor="middle"
                 fontSize={fontSize} fontFamily='"DM Mono", monospace'

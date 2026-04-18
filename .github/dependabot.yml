@@ -18,4 +18,4 @@ updates:
     groups:
       backend-deps:
         patterns:
-          - "*"
+          - "*" 

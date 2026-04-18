@@ -58,6 +58,42 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def _configure_uvicorn_logging() -> None:
+    fmt = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+    formatter = logging.Formatter(fmt)
+
+    class _AccessMsgFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            # uvicorn pasa: (client_addr, method, path, http_version, status_code)
+            args = record.args
+            if isinstance(args, tuple) and len(args) == 5:
+                client, method, path, http_ver, status = args
+                record.msg = (
+                    f'[BACKEND-API] {client} - "{method} {path} HTTP/{http_ver}" {status}'
+                )
+                record.args = ()
+            return True
+
+    access = logging.getLogger("uvicorn.access")
+    for h in list(access.handlers):
+        access.removeHandler(h)
+
+    stream_handler = logging.StreamHandler(sys.stdout)
+    stream_handler.setFormatter(formatter)
+    file_handler = logging.FileHandler("onpe_backend.log", encoding="utf-8")
+    file_handler.setFormatter(formatter)
+
+    access.addHandler(stream_handler)
+    access.addHandler(file_handler)
+    access.propagate = False
+    access.addFilter(_AccessMsgFilter())
+
+    uvicorn_logger = logging.getLogger("uvicorn")
+    for h in list(uvicorn_logger.handlers):
+        uvicorn_logger.removeHandler(h)
+    uvicorn_logger.propagate = True
+
+
 # ── Lifespan (startup / shutdown) ─────────────────────────────────────────
 
 class ChatMessage(BaseModel):
@@ -75,6 +111,7 @@ def _sse(payload: dict) -> str:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    _configure_uvicorn_logging()
     logger.info("Backend starting up…")
     scheduler.start()
     asyncio.create_task(rag_engine.initialize())

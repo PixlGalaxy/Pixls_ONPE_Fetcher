@@ -1,5 +1,4 @@
 User-agent: *
 Allow: /
-Disallow: /api/
 
 Sitemap: https://devapp.zaylar.com/sitemap.xml

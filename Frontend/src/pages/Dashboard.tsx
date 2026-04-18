@@ -44,6 +44,7 @@ export default function Dashboard() {
   const [showAll, setShowAll] = useState(false);
   const [showToast, setShowToast] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
+  const [isIdle, setIsIdle] = useState(false);
 
   const actas = current?.actas;
   const allCandidates = current?.candidates ?? [];
@@ -109,6 +110,21 @@ export default function Dashboard() {
     }
   }, [showToast]);
 
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const reset = () => {
+      setIsIdle(false);
+      clearTimeout(timer);
+      timer = setTimeout(() => setIsIdle(true), 4000);
+    };
+    window.addEventListener('mousemove', reset);
+    reset();
+    return () => {
+      window.removeEventListener('mousemove', reset);
+      clearTimeout(timer);
+    };
+  }, []);
+
   const getPercentageGradient = () =>
     'linear-gradient(90deg, #FFD700 0%, #FFB300 50%, #FF6F00 100%)';
 
@@ -127,7 +143,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-4">
       {/* ══════════ Hero Header ══════════ */}
-      <div className="flex items-center justify-between gap-4 flex-wrap pt-5 pb-3 border-b" style={{ borderColor: 'var(--border)' }}>
+      <div className="flex items-center justify-between gap-4 flex-wrap pt-5 pb-3 border-b" style={{ borderColor: 'var(--border)', position: 'relative', overflow: 'visible' }}>
         <div className="min-w-[140px]">
           <h1
             className="text-lg font-bold tracking-tight"
@@ -142,6 +158,27 @@ export default function Dashboard() {
             PIXL's ONPE Fetcher
           </h1>
         </div>
+
+        {/* Galaxy Easter Egg */}
+        <img
+          src="/Galaxy-Zombie.png"
+          alt="Galaxy Zombie"
+          className="hidden md:block"
+          style={{
+            position: 'absolute',
+            left: '200px',
+            top: '50%',
+            width: '64px',
+            height: 'auto',
+            transform: isIdle ? 'translateY(-50%)' : 'translateY(calc(-50% + 210px))',
+            opacity: isIdle ? 1 : 0,
+            transition: isIdle
+              ? 'transform 1s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.35s ease'
+              : 'transform 0.4s ease-in, opacity 0.25s ease',
+            zIndex: 20,
+            pointerEvents: 'none',
+          }}
+        />
 
         <div className="text-center flex-1">
           <div className="text-[10px] font-semibold uppercase tracking-[1.5px]" style={{ color: 'var(--tx3)' }}>
@@ -164,7 +201,7 @@ export default function Dashboard() {
               }}
             >
               {actas?.actas_contabilizadas_pct.toFixed(3)}
-              <span className="text-4xl tracking-normal">%</span>
+              <span className="text-4xl tracking-normal ml-1">%</span>
             </div>
           )}
           <div className="flex items-center justify-center gap-1.5 text-[11px] mt-1" style={{ color: 'var(--tx3)' }}>

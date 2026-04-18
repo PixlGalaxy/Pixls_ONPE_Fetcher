@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { X } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { X, Download } from 'lucide-react';
 import SeoBlock from '../components/SeoBlock';
 import ElectionMap from '../components/ElectionMap';
 import { useElectionData } from '../hooks/useElectionData';
@@ -21,8 +21,179 @@ interface ModalData {
 export default function MapPage() {
   const { regions, abroad, current, loading } = useElectionData();
   const [modal, setModal] = useState<ModalData | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
   const actas = current?.actas;
+
+  async function handleExportMap() {
+    if (exporting) return;
+    setExporting(true);
+    try {
+      const svgEl = mapContainerRef.current?.querySelector('svg');
+      if (!svgEl) return;
+
+      const MAP_W = 500, MAP_H = 667;
+      const PADDING = 28;
+      const TOTAL_W = MAP_W + PADDING * 2;
+      const top5 = current?.candidates?.slice(0, 5) ?? [];
+      const HEADER_H = 90;
+      const CAND_H = top5.length > 0 ? 20 + top5.length * 26 + 14 : 0;
+      const FOOTER_H = 70;
+      const TOTAL_H = PADDING + HEADER_H + MAP_H + CAND_H + FOOTER_H;
+
+      const scale = 2;
+      const canvas = document.createElement('canvas');
+      canvas.width = TOTAL_W * scale;
+      canvas.height = TOTAL_H * scale;
+      const ctx = canvas.getContext('2d')!;
+      ctx.scale(scale, scale);
+
+      ctx.fillStyle = '#0d0f16';
+      ctx.fillRect(0, 0, TOTAL_W, TOTAL_H);
+
+      // Prep SVG clone
+      const svgClone = svgEl.cloneNode(true) as SVGElement;
+      svgClone.setAttribute('width', String(MAP_W));
+      svgClone.setAttribute('height', String(MAP_H));
+      svgClone.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+      svgClone.querySelectorAll('.dept-path').forEach(el => {
+        const e = el as SVGElement;
+        e.style.cssText = '';
+        e.setAttribute('stroke', '#0f1117');
+        e.setAttribute('stroke-width', '0.5');
+        e.setAttribute('opacity', '0.85');
+      });
+      svgClone.querySelectorAll('.dept-label').forEach(el => {
+        const e = el as SVGElement;
+        e.style.cssText = '';
+        e.setAttribute('opacity', '1');
+      });
+
+      const svgBlob = new Blob([new XMLSerializer().serializeToString(svgClone)], {
+        type: 'image/svg+xml;charset=utf-8',
+      });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      const mapImg = new Image();
+      mapImg.src = svgUrl;
+      await new Promise<void>((resolve, reject) => {
+        mapImg.onload = () => resolve();
+        mapImg.onerror = reject;
+        setTimeout(reject, 10000);
+      });
+
+      let y = PADDING;
+
+      // Title
+      ctx.fillStyle = '#f0f2f8';
+      ctx.font = 'bold 20px system-ui, -apple-system, sans-serif';
+      ctx.fillText('Mapa Electoral Perú 2026', PADDING, y + 22);
+      y += 30;
+
+      // Subtitle
+      ctx.fillStyle = '#6b7080';
+      ctx.font = '11px system-ui, -apple-system, sans-serif';
+      ctx.fillText(
+        `Resultados parciales ONPE · ${actas?.actas_contabilizadas_pct.toFixed(2) ?? '—'}% de actas contabilizadas`,
+        PADDING, y + 14,
+      );
+      y += 22;
+
+      // Legend
+      let lx = PADDING;
+      for (const [key, name] of Object.entries(SHORT_NAMES)) {
+        const color = CANDIDATE_COLORS[key]?.color ?? '#888';
+        ctx.fillStyle = color;
+        ctx.fillRect(lx, y + 3, 9, 9);
+        ctx.fillStyle = '#9ca0b0';
+        ctx.font = '10.5px system-ui, -apple-system, sans-serif';
+        ctx.fillText(name, lx + 13, y + 12);
+        lx += ctx.measureText(name).width + 28;
+      }
+      y += 20;
+
+      // Map
+      ctx.drawImage(mapImg, PADDING, y, MAP_W, MAP_H);
+      URL.revokeObjectURL(svgUrl);
+      y += MAP_H + 16;
+
+      // National results
+      if (top5.length > 0) {
+        ctx.fillStyle = '#4a4f64';
+        ctx.font = '9px system-ui, -apple-system, sans-serif';
+        ctx.fillText('RESULTADOS NACIONALES', PADDING, y + 10);
+        y += 18;
+
+        const maxPct = Math.max(...top5.map(c => c.percentage), 1);
+        for (const c of top5) {
+          const color = getCandidateColor(c);
+          const key = getCandidateKey(c);
+          const name = SHORT_NAMES[key] ?? c.name ?? c.party;
+          const barFill = (c.percentage / maxPct) * (MAP_W - 70);
+
+          ctx.fillStyle = '#1a1d26';
+          ctx.fillRect(PADDING, y, MAP_W, 22);
+          ctx.fillStyle = color + '55';
+          ctx.fillRect(PADDING, y, barFill, 22);
+          ctx.fillStyle = color;
+          ctx.fillRect(PADDING, y, 3, 22);
+
+          ctx.fillStyle = '#d0d4e0';
+          ctx.font = '11px system-ui, -apple-system, sans-serif';
+          ctx.fillText(name, PADDING + 10, y + 15);
+
+          ctx.fillStyle = color;
+          ctx.font = 'bold 11px monospace';
+          const pctStr = `${c.percentage.toFixed(2)}%`;
+          ctx.fillText(pctStr, PADDING + MAP_W - ctx.measureText(pctStr).width - 6, y + 15);
+          y += 26;
+        }
+        y += 8;
+      }
+
+      // Divider
+      ctx.strokeStyle = '#252836';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(PADDING, y);
+      ctx.lineTo(TOTAL_W - PADDING, y);
+      ctx.stroke();
+      y += 12;
+
+      // Source URL
+      ctx.fillStyle = '#4a4f64';
+      ctx.font = '10px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`Extraído de: ${window.location.href}`, PADDING, y + 12);
+      y += 22;
+
+      // Footer
+      ctx.fillStyle = '#353848';
+      ctx.font = '9.5px system-ui, -apple-system, sans-serif';
+      ctx.fillText(
+        "PIXL's ONPE Fetcher  ·  Developed by PixlGalaxy  ·  © 2026 Fabrizio Gamboa  ·  Hosted on ItzGalaxy.com",
+        PADDING, y + 12,
+      );
+
+      await new Promise<void>(resolve => {
+        canvas.toBlob(blob => {
+          if (!blob) { resolve(); return; }
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'mapa-electoral-peru-2026.png';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          resolve();
+        }, 'image/png');
+      });
+    } catch (err) {
+      console.error('Export failed:', err);
+    } finally {
+      setExporting(false);
+    }
+  }
 
   function regionName(data: RegionSnapshot): string {
     const parts = data.scope?.split(':') ?? [];
@@ -41,6 +212,15 @@ export default function MapPage() {
             Ganador por region ({actas?.actas_contabilizadas_pct.toFixed(2) ?? '...'}%)
           </p>
         </div>
+        <button
+          onClick={handleExportMap}
+          disabled={exporting || loading}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-md border text-[11px] font-semibold transition-all hover:opacity-80 disabled:opacity-40"
+          style={{ background: 'var(--bg-alt)', borderColor: 'var(--border)', color: 'var(--tx2)' }}
+        >
+          <Download size={13} />
+          {exporting ? 'Exportando...' : 'Exportar mapa'}
+        </button>
       </div>
 
       {/* ══════════ Legend ══════════ */}
@@ -89,6 +269,7 @@ export default function MapPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:items-start">
         {/* Map Card */}
         <div
+          ref={mapContainerRef}
           className="rounded-[var(--radius)] p-4 border animate-fade-up lg:col-span-1"
           style={{ background: 'var(--bg-card)', borderColor: 'var(--border)', aspectRatio: '500 / 699' }}
         >

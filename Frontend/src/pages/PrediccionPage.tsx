@@ -102,16 +102,25 @@ export default function PrediccionPage() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchPrediction = useCallback(async () => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5_000);
+
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true);
-      setError(null);
-      const res = await fetch(`${API_BASE}/predictions`);
+      const res = await fetch(`${API_BASE}/predictions`, { signal: controller.signal });
+      clearTimeout(timeoutId);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json: PredictionData = await res.json();
       setData(json);
+      setLoading(false);
     } catch (e) {
+      clearTimeout(timeoutId);
+      if (e instanceof DOMException && e.name === 'AbortError') {
+        return;
+      }
       setError(e instanceof Error ? e.message : 'Error desconocido');
-    } finally {
       setLoading(false);
     }
   }, []);

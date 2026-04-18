@@ -1,4 +1,6 @@
-const srOnly: React.CSSProperties = {
+import type { CSSProperties, ReactNode } from 'react';
+
+const srOnly: CSSProperties = {
   position: 'absolute',
   width: '1px',
   height: '1px',
@@ -10,7 +12,7 @@ const srOnly: React.CSSProperties = {
   border: 0,
 };
 
-export default function SeoBlock({ children }: { children: React.ReactNode }) {
+export default function SeoBlock({ children }: { children: ReactNode }) {
   return (
     <section aria-hidden="true" style={srOnly}>
       {children}

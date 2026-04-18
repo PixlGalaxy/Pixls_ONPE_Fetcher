@@ -1,4 +1,4 @@
-import { Code2, Copy, CheckCircle2, Zap, Terminal, Database, MessageSquare, Package, ChevronDown, MapPin } from 'lucide-react';
+import { Copy, CheckCircle2, Zap, Terminal, Database, MessageSquare, Package, ChevronDown, MapPin } from 'lucide-react';
 import { useState } from 'react';
 import SeoBlock from '../components/SeoBlock';
 import { Link } from 'react-router-dom';

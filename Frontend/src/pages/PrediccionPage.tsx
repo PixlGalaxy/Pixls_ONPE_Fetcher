@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RefreshCw, TrendingUp, TrendingDown, BarChart3, AlertTriangle, Target, Shuffle, ChevronUp, ChevronDown, Minus } from 'lucide-react';
+import { RefreshCw, TrendingUp, TrendingDown, BarChart3, AlertTriangle, Shuffle, ChevronUp, ChevronDown, Minus } from 'lucide-react';
 import SeoBlock from '../components/SeoBlock';
 import { API_BASE, SHORT_NAMES, ID_TO_KEY, PARTY_TO_KEY, CANDIDATE_COLORS } from '../types/election';
 

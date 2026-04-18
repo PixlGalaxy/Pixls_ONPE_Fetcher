@@ -187,6 +187,22 @@ export default function PrediccionPage() {
         </div>
       )}
 
+      <SeoBlock>
+        <h1>Predicciones Electorales Perú 2026</h1>
+        <p>
+          Proyecciones y predicciones estadísticas de los resultados finales de las elecciones
+          presidenciales Perú 2026 basadas en el conteo parcial de votos y actas de la ONPE.
+          Modelos de estimación con intervalos de confianza.
+        </p>
+        <h2>Metodología de predicción electoral</h2>
+        <ul>
+          <li>Proyección de votos totales</li>
+          <li>Intervalos de confianza estadísticos</li>
+          <li>Tendencias por región y departamento</li>
+          <li>Simulaciones basadas en actas contabilizadas</li>
+        </ul>
+      </SeoBlock>
+
       {data && sim && meta && (
         <>
           {/* ══════════ Meta Info Bar ══════════ */}
@@ -503,21 +519,6 @@ function RegionalSection({ regionals }: { regionals: RegionalPrediction[] }) {
           })}
         </div>
       )}
-      <SeoBlock>
-        <h1>Predicciones Electorales Perú 2026</h1>
-        <p>
-          Proyecciones y predicciones estadísticas de los resultados finales de las elecciones
-          presidenciales Perú 2026 basadas en el conteo parcial de votos y actas de la ONPE.
-          Modelos de estimación con intervalos de confianza.
-        </p>
-        <h2>Metodología de predicción electoral</h2>
-        <ul>
-          <li>Proyección de votos totales</li>
-          <li>Intervalos de confianza estadísticos</li>
-          <li>Tendencias por región y departamento</li>
-          <li>Simulaciones basadas en actas contabilizadas</li>
-        </ul>
-      </SeoBlock>
     </div>
   );
 }

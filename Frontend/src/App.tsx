@@ -1,17 +1,18 @@
-import { useEffect } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import Navbar from './components/Navbar';
-import Dashboard from './pages/Dashboard';
-import MapPage from './pages/MapPage';
-import CandidatosPage from './pages/CandidatosPage';
-import HistorialPage from './pages/HistorialPage';
-import PrediccionPage from './pages/PrediccionPage';
-import AboutPage from './pages/AboutPage';
-import APIPage from './pages/APIPage';
-import UbigeoPage from './pages/UbigeoPage';
-import ChatPage from './pages/ChatPage';
-import NotFound from './pages/NotFound';
+
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const MapPage = lazy(() => import('./pages/MapPage'));
+const CandidatosPage = lazy(() => import('./pages/CandidatosPage'));
+const HistorialPage = lazy(() => import('./pages/HistorialPage'));
+const PrediccionPage = lazy(() => import('./pages/PrediccionPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const APIPage = lazy(() => import('./pages/APIPage'));
+const UbigeoPage = lazy(() => import('./pages/UbigeoPage'));
+const ChatPage = lazy(() => import('./pages/ChatPage'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
 const PAGE_TITLES: Record<string, string> = {
   '/': 'Dashboard',
@@ -40,22 +41,23 @@ export default function App() {
       <TitleUpdater />
       <div className="max-w-[1200px] mx-auto px-5 py-4">
         <Navbar />
-        <Routes>
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/mapa" element={<MapPage />} />
-          <Route path="/candidatos" element={<CandidatosPage />} />
-          <Route path="/prediccion" element={<PrediccionPage />} />
-          <Route path="/about" element={<AboutPage />} />
-          <Route path="/historial" element={<HistorialPage />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/API_DOCS" element={<APIPage />} />
-          <Route path="/ubigeo" element={<UbigeoPage />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <Suspense fallback={null}>
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/mapa" element={<MapPage />} />
+            <Route path="/candidatos" element={<CandidatosPage />} />
+            <Route path="/prediccion" element={<PrediccionPage />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/historial" element={<HistorialPage />} />
+            <Route path="/chat" element={<ChatPage />} />
+            <Route path="/API_DOCS" element={<APIPage />} />
+            <Route path="/ubigeo" element={<UbigeoPage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Suspense>
         <div className="text-center mt-8 pt-6 pb-5 text-[10px] border-t" style={{ color: 'var(--tx0)', borderColor: 'var(--border)' }}>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 flex-wrap">
-            <span className="font-semibold">PIXL's ONPE Fetcher</span>
-            <span>|</span>
+          <div className="font-semibold mb-1.5">PIXL's ONPE Fetcher</div>
+          <div className="flex items-center justify-center flex-wrap gap-x-2 gap-y-1">
             <span>Developed By</span>
             <a
               href="https://github.com/PixlGalaxy"
@@ -67,7 +69,7 @@ export default function App() {
               PixlGalaxy
               <ExternalLink size={10} />
             </a>
-            <span>|</span>
+            <span className="opacity-30 hidden sm:inline">|</span>
             <span>© 2026</span>
             <a
               href="https://fabriziogamboa.com"
@@ -79,8 +81,8 @@ export default function App() {
               Fabrizio Gamboa
               <ExternalLink size={10} />
             </a>
-            <span>|</span>
-            <span>Hosted On: </span>
+            <span className="opacity-30 hidden sm:inline">|</span>
+            <span>Hosted On:</span>
             <a
               href="https://itzgalaxy.com"
               target="_blank"

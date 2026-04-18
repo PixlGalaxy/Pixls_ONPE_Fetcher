@@ -93,7 +93,7 @@ export default function Dashboard() {
     if (!sched?.next_check_time) { setCountdown(null); return; }
     const update = () => {
       const diff = Math.max(0, Math.floor((new Date(sched.next_check_time!).getTime() - Date.now()) / 1000));
-      if (diff <= 0) { setCountdown('ahora…'); return; }
+      if (diff <= 0) { setCountdown('Ahora…'); return; }
       const m = Math.floor(diff / 60);
       const s = diff % 60;
       setCountdown(m > 0 ? `${m}m ${s.toString().padStart(2, '0')}s` : `${s}s`);
@@ -292,20 +292,20 @@ export default function Dashboard() {
             )}
             {lastCheck && (
               <span className="flex items-center gap-1">
-                <Clock size={10} style={{ opacity: 0.6 }} />
+                <Clock size={10} style={{ color: 'var(--clock)', opacity: 0.6 }} />
                 Último Fetch De ONPE: {lastCheck}
               </span>
             )}
             {countdown && (
               <span className="flex items-center gap-1 font-mono">
-                <Timer size={10} style={{ opacity: 0.6 }} />
+                <Timer size={10} style={{ color: 'var(--clock)',opacity: 0.6 }} />
                 Próximo Fetch De ONPE: {countdown}
               </span>
             )}
             {lastChange && (
               <span className="flex items-center gap-1">
-                <Zap size={10} style={{ color: 'var(--c-fuji)', opacity: 0.7 }} />
-                ONPE cambió: {lastChange}
+                <Zap size={10} style={{ color: 'var(--lightning)', opacity: 0.7 }} />
+                ONPE Actualizó: {lastChange}
               </span>
             )}
           </div>

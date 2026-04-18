@@ -1,7 +1,7 @@
 version: 2
 updates:
   - package-ecosystem: "npm"
-    directory: "/frontend"
+    directory: "/Frontend"
     open-pull-requests-limit: 15
     schedule:
       interval: "daily"
@@ -9,13 +9,13 @@ updates:
       frontend-deps:
         patterns:
           - "*"
-
-  - package-ecosystem: "npm"
-    directory: "/backend"
-    open-pull-requests-limit: 15
+          
+  - package-ecosystem: "pip"
+    directory: "/Backend"
+    open-pull-requests-limit: 10
     schedule:
       interval: "daily"
     groups:
-      backend-deps:
+      backend-python-deps:
         patterns:
-          - "*" 
+          - "*"

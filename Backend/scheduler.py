@@ -4,7 +4,6 @@ import threading
 import time
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-import multiprocessing
 
 import fetcher
 import processor
@@ -142,7 +141,7 @@ def _full_refresh() -> None:
 
     _fetch_and_store_regions("presidential")
 
-    multiprocessing.Process(
+    threading.Thread(
         target=_run_prediction_safe, name="predictor", daemon=True
     ).start()
 
@@ -265,7 +264,7 @@ def start() -> None:
     _thread.start()
     logger.info("[SCHEDULER] Started.")
 
-    multiprocessing.Process(
+    threading.Thread(
         target=_run_prediction_safe, name="predictor-startup", daemon=True
     ).start()
 

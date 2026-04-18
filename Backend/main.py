@@ -93,6 +93,13 @@ def _configure_uvicorn_logging() -> None:
         uvicorn_logger.removeHandler(h)
     uvicorn_logger.propagate = True
 
+    class _RenameUvicornFilter(logging.Filter):
+        def filter(self, record: logging.LogRecord) -> bool:
+            record.name = "uvicorn"
+            return True
+
+    logging.getLogger("uvicorn.error").addFilter(_RenameUvicornFilter())
+
 
 # ── Lifespan (startup / shutdown) ─────────────────────────────────────────
 

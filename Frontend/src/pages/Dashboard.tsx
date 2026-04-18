@@ -108,9 +108,11 @@ export default function Dashboard() {
     }
   }, [showToast]);
 
-  const getPercentageColor = () => {
-    return '#FFD700'; // amarillo
-  };
+  const getPercentageGradient = () =>
+    'linear-gradient(90deg, #FFD700 0%, #FFB300 50%, #FF6F00 100%)';
+
+  const getTitleGradient = () =>
+    'linear-gradient(90deg, #00ddff 0%, #00ff9d 100%)';
 
   const pageUrl = window.location.href;
   
@@ -126,7 +128,16 @@ export default function Dashboard() {
       {/* ══════════ Hero Header ══════════ */}
       <div className="flex items-center justify-between gap-4 flex-wrap pt-5 pb-3 border-b" style={{ borderColor: 'var(--border)' }}>
         <div className="min-w-[140px]">
-          <h1 className="text-lg font-bold tracking-tight" style={{ color: 'var(--c-belm)' }}>
+          <h1
+            className="text-lg font-bold tracking-tight"
+            style={{
+              background: getTitleGradient(),
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              color: 'transparent',
+            }}
+          >
             PIXL's ONPE Fetcher
           </h1>
         </div>
@@ -144,7 +155,11 @@ export default function Dashboard() {
             <div
               className="font-mono text-7xl font-bold leading-none tracking-tighter"
               style={{
-                color: getPercentageColor(),
+                background: getPercentageGradient(),
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                color: 'transparent',
               }}
             >
               {actas?.actas_contabilizadas_pct.toFixed(3)}

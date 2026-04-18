@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import SeoBlock from '../components/SeoBlock';
 import ElectionMap from '../components/ElectionMap';
 import { useElectionData } from '../hooks/useElectionData';
 import {
@@ -282,6 +283,21 @@ export default function MapPage() {
           </div>
         );
       })()}
+      <SeoBlock>
+        <h1>Mapa Electoral Perú 2026</h1>
+        <p>
+          Visualiza en un mapa interactivo los resultados de las elecciones presidenciales Perú 2026
+          por departamento y región. Consulta qué candidato lidera en cada zona del país según los
+          datos oficiales de la ONPE.
+        </p>
+        <h2>Datos disponibles en el mapa electoral</h2>
+        <ul>
+          <li>Resultados por departamento</li>
+          <li>Porcentaje de votos por región</li>
+          <li>Actas contabilizadas por zona</li>
+          <li>Candidato líder por área geográfica</li>
+        </ul>
+      </SeoBlock>
     </div>
   );
 }

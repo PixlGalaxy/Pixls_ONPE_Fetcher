@@ -1,5 +1,6 @@
 import { Code2, Copy, CheckCircle2, Zap, Terminal, Database, MessageSquare, Package, ChevronDown, MapPin } from 'lucide-react';
 import { useState } from 'react';
+import SeoBlock from '../components/SeoBlock';
 import { Link } from 'react-router-dom';
 import { API_BASE } from '../types/election';
 
@@ -613,6 +614,21 @@ print(regions)`}
           Reportar un Problema
         </a>
       </div>
+      <SeoBlock>
+        <h1>API Pública de Resultados ONPE 2026</h1>
+        <p>
+          Accede a los datos oficiales de las elecciones presidenciales Perú 2026 mediante nuestra
+          API REST gratuita. Integra el conteo de votos ONPE en tiempo real en tus propias
+          aplicaciones y proyectos de análisis electoral.
+        </p>
+        <h2>Endpoints disponibles en la API electoral</h2>
+        <ul>
+          <li>Resultados generales de la elección presidencial</li>
+          <li>Datos por candidato y partido político</li>
+          <li>Resultados desagregados por ubigeo y región</li>
+          <li>Historial y snapshots del escrutinio ONPE</li>
+        </ul>
+      </SeoBlock>
     </div>
   );
 }

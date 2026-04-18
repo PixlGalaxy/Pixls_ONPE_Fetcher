@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { GitBranch, ExternalLink, Users2, Wrench, Server } from 'lucide-react';
+import SeoBlock from '../components/SeoBlock';
 
 interface Contributor {
   login: string;
@@ -311,6 +312,21 @@ export default function AboutPage() {
           </a>
         </p>
       </div>
+      <SeoBlock>
+        <h1>Acerca de PIXL's ONPE Fetcher</h1>
+        <p>
+          PIXL's ONPE Fetcher es una plataforma de código abierto para visualizar en tiempo real los
+          resultados de las elecciones presidenciales Perú 2026. Desarrollada para ofrecer
+          transparencia y acceso a los datos oficiales de la ONPE de manera clara y actualizada.
+        </p>
+        <h2>Tecnología y equipo</h2>
+        <ul>
+          <li>Datos en tiempo real de la ONPE oficial</li>
+          <li>Código abierto disponible en GitHub</li>
+          <li>Desarrollado por la comunidad peruana</li>
+          <li>Actualizaciones automáticas de la ONPE</li>
+        </ul>
+      </SeoBlock>
     </div>
   );
 }

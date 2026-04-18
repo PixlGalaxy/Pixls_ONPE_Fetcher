@@ -33,6 +33,7 @@
  */
 
 import { useState, useMemo, useEffect } from 'react';
+import SeoBlock from '../components/SeoBlock';
 import { RefreshCw, FileText, Clock, ChevronDown, ChevronUp, TrendingUp, Flame, Zap, AlertTriangle, Database, Radio, Timer, Share2, CheckCircle2 } from 'lucide-react';
 import CandidateCard, { type CandidateTrend } from '../components/CandidateCard';
 import TimelineChart from '../components/TimelineChart';
@@ -370,6 +371,21 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+      <SeoBlock>
+        <h1>Resultados ONPE 2026 en tiempo real</h1>
+        <p>
+          Esta plataforma permite visualizar el conteo de votos de las elecciones Perú 2026
+          en tiempo real utilizando datos oficiales de la ONPE. Incluye mapa electoral,
+          análisis por candidatos y predicciones basadas en tendencias actuales.
+        </p>
+        <h2>¿Qué puedes encontrar aquí?</h2>
+        <ul>
+          <li>Conteo actualizado de votos</li>
+          <li>Mapa interactivo del Perú</li>
+          <li>Predicciones electorales</li>
+          <li>Historial de resultados</li>
+        </ul>
+      </SeoBlock>
     </div>
   );
 }

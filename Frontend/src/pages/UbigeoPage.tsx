@@ -1,5 +1,6 @@
 import { MapPin, Search, ChevronDown, ArrowLeft } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import SeoBlock from '../components/SeoBlock';
 import { Link } from 'react-router-dom';
 
 interface Province {
@@ -417,6 +418,21 @@ export default function UbigeoPage() {
           </div>
         )}
       </div>
+      <SeoBlock>
+        <h1>Resultados Electorales por Región y Ubigeo Perú 2026</h1>
+        <p>
+          Busca y consulta los resultados de las elecciones presidenciales Perú 2026 por departamento,
+          provincia y distrito. Datos desagregados por ubigeo con actas y votos por zona geográfica
+          según la ONPE.
+        </p>
+        <h2>Búsqueda de resultados por ubigeo</h2>
+        <ul>
+          <li>Resultados por departamento peruano</li>
+          <li>Desglose por provincia y distrito</li>
+          <li>Actas y votos por ubigeo</li>
+          <li>Comparación entre regiones del Perú</li>
+        </ul>
+      </SeoBlock>
     </div>
   );
 }

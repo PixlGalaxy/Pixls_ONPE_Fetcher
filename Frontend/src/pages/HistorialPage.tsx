@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { Clock } from 'lucide-react';
+import SeoBlock from '../components/SeoBlock';
 import { useElectionData } from '../hooks/useElectionData';
 import { SHORT_NAMES, getCandidateKey } from '../types/election';
 import TimelineChart from '../components/TimelineChart';
@@ -135,6 +136,21 @@ export default function HistorialPage() {
           </div>
         )}
       </div>
+      <SeoBlock>
+        <h1>Historial de Resultados Electorales ONPE 2026</h1>
+        <p>
+          Seguimiento cronológico del conteo de votos en las elecciones presidenciales Perú 2026.
+          Consulta la evolución histórica del escrutinio con snapshots periódicos de los datos
+          oficiales de la ONPE.
+        </p>
+        <h2>Datos del historial electoral</h2>
+        <ul>
+          <li>Evolución del conteo de votos por hora</li>
+          <li>Porcentaje de actas procesadas a lo largo del tiempo</li>
+          <li>Cambios en el ranking de candidatos</li>
+          <li>Registros históricos del escrutinio oficial</li>
+        </ul>
+      </SeoBlock>
     </div>
   );
 }

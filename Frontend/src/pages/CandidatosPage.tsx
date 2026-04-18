@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Search, ArrowUpDown } from 'lucide-react';
+import SeoBlock from '../components/SeoBlock';
 import { useElectionData } from '../hooks/useElectionData';
 import {
   type Candidate,
@@ -200,6 +201,21 @@ export default function CandidatosPage() {
           No se encontraron candidatos para "{search}"
         </div>
       )}
+      <SeoBlock>
+        <h1>Candidatos Presidenciales Perú 2026</h1>
+        <p>
+          Consulta la lista completa de candidatos presidenciales de las elecciones Perú 2026 con sus
+          votos actualizados, porcentaje obtenido y partido político. Datos oficiales de la ONPE en
+          tiempo real.
+        </p>
+        <h2>Información disponible por candidato</h2>
+        <ul>
+          <li>Número de votos obtenidos</li>
+          <li>Porcentaje de votación</li>
+          <li>Partido político</li>
+          <li>Posición en el ranking electoral</li>
+        </ul>
+      </SeoBlock>
     </div>
   );
 }

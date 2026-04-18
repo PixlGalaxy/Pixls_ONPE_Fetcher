@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RefreshCw, TrendingUp, TrendingDown, BarChart3, AlertTriangle, Target, Shuffle, ChevronUp, ChevronDown, Minus } from 'lucide-react';
+import SeoBlock from '../components/SeoBlock';
 import { API_BASE, SHORT_NAMES, ID_TO_KEY, PARTY_TO_KEY, CANDIDATE_COLORS } from '../types/election';
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
@@ -502,6 +503,21 @@ function RegionalSection({ regionals }: { regionals: RegionalPrediction[] }) {
           })}
         </div>
       )}
+      <SeoBlock>
+        <h1>Predicciones Electorales Perú 2026</h1>
+        <p>
+          Proyecciones y predicciones estadísticas de los resultados finales de las elecciones
+          presidenciales Perú 2026 basadas en el conteo parcial de votos y actas de la ONPE.
+          Modelos de estimación con intervalos de confianza.
+        </p>
+        <h2>Metodología de predicción electoral</h2>
+        <ul>
+          <li>Proyección de votos totales</li>
+          <li>Intervalos de confianza estadísticos</li>
+          <li>Tendencias por región y departamento</li>
+          <li>Simulaciones basadas en actas contabilizadas</li>
+        </ul>
+      </SeoBlock>
     </div>
   );
 }

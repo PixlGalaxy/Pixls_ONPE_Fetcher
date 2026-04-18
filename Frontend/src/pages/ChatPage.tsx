@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import type { KeyboardEvent, ComponentProps, JSX } from 'react';
+import SeoBlock from '../components/SeoBlock';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -463,9 +464,24 @@ export default function ChatPage() {
           </button>
         </div>
         <p className="text-[10px] mt-1.5 text-center" style={{ color: 'var(--tx0)' }}>
-          ZaylarAI Puede Cometer Errores · Verifica datos críticos con fuentes oficiales del ONPE 
+          ZaylarAI Puede Cometer Errores · Verifica datos críticos con fuentes oficiales del ONPE
         </p>
       </div>
+      <SeoBlock>
+        <h1>Chat Electoral IA Perú 2026 — ZaylarAI</h1>
+        <p>
+          Consulta a ZaylarAI tus preguntas sobre los resultados de las elecciones presidenciales
+          Perú 2026. Análisis inteligente del conteo de votos ONPE, candidatos y tendencias
+          electorales mediante inteligencia artificial.
+        </p>
+        <h2>¿Qué puedes preguntar al asistente electoral?</h2>
+        <ul>
+          <li>¿Quién va ganando las elecciones Perú 2026?</li>
+          <li>Análisis de resultados por departamento</li>
+          <li>Comparación entre candidatos presidenciales</li>
+          <li>Predicciones basadas en actas contabilizadas</li>
+        </ul>
+      </SeoBlock>
     </div>
   );
 }

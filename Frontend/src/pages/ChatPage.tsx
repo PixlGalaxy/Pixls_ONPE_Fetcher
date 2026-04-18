@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import type { KeyboardEvent, ComponentProps, JSX } from 'react';
 import SeoBlock from '../components/SeoBlock';
 import ReactMarkdown from 'react-markdown';
@@ -275,6 +275,7 @@ export default function ChatPage() {
     ta.style.height = `${Math.min(ta.scrollHeight, 140)}px`;
   }, [input]);
 
+
   /* Guardar en localStorage cuando no hay streaming activo */
   useEffect(() => {
     if (!busy) saveMessages(messages);
@@ -377,7 +378,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex flex-col" style={{ height: 'calc(100dvh - 110px)', minHeight: '420px' }}>
+    <div className="flex flex-col" style={{ height: 'calc(100dvh - 110px)', minHeight: '420px', overscrollBehavior: 'none' }}>
 
       {/* ══════════ Header ══════════ */}
       <div
@@ -412,7 +413,7 @@ export default function ChatPage() {
       </div>
 
       {/* ══════════ Messages ══════════ */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1">
+      <div className="flex-1 overflow-y-auto py-4 space-y-4 pr-1" style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}>
         {messages.map((msg, i) => (
           <MessageBubble key={i} message={msg} />
         ))}
@@ -431,7 +432,7 @@ export default function ChatPage() {
       </div>
 
       {/* ══════════ Input ══════════ */}
-      <div className="flex-shrink-0 border-t pt-3 pb-1" style={{ borderColor: 'var(--border)' }}>
+      <div className="flex-shrink-0 border-t pt-3" style={{ borderColor: 'var(--border)', paddingBottom: 'max(0.25rem, env(safe-area-inset-bottom, 0.25rem))' }}>
         <div
           className="flex gap-2 items-center rounded-xl border px-3 py-2 transition-colors"
           style={{
@@ -444,10 +445,21 @@ export default function ChatPage() {
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKey}
+            onFocus={() => {
+              if (window.innerWidth >= 768) return;
+              document.documentElement.style.overflow = 'hidden';
+              document.body.style.overflow = 'hidden';
+              setTimeout(() => window.scrollTo(0, 0), 50);
+            }}
+            onBlur={() => {
+              if (window.innerWidth >= 768) return;
+              document.documentElement.style.overflow = '';
+              document.body.style.overflow = '';
+            }}
             disabled={busy}
             placeholder={busy ? 'Esperando respuesta…' : 'Escribe tu pregunta… (Enter para enviar, Shift+Enter nueva línea)'}
             rows={1}
-            className="flex-1 resize-none bg-transparent text-[13px] outline-none"
+            className="flex-1 resize-none bg-transparent text-base md:text-[13px] outline-none"
             style={{
               color: 'var(--tx1)',
               caretColor: '#4A90D9',
@@ -464,7 +476,7 @@ export default function ChatPage() {
           </button>
         </div>
         <p className="text-[10px] mt-1.5 text-center" style={{ color: 'var(--tx0)' }}>
-          ZaylarAI Puede Cometer Errores · Verifica datos críticos con fuentes oficiales del ONPE
+          ZaylarAI Puede Cometer Errores · Verifica datos críticos con fuentes oficiales de la ONPE
         </p>
       </div>
       <SeoBlock>

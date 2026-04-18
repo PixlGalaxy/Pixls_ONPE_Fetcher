@@ -264,7 +264,7 @@ export default function APIPage() {
       {/* Hero Section */}
       <div className="text-center mb-12">
         <h1 className="text-4xl font-bold mb-4 flex items-center justify-center gap-3" style={{ color: 'var(--tx1)' }}>
-          API Documentation
+          Documentación De API
         </h1>
         <p className="text-lg mb-6" style={{ color: 'var(--tx2)' }}>
           Accede a los datos electorales en tiempo real a través de nuestra API

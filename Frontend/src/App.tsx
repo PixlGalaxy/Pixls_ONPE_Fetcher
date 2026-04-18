@@ -9,6 +9,7 @@ import PrediccionPage from './pages/PrediccionPage';
 import AboutPage from './pages/AboutPage';
 import APIPage from './pages/APIPage';
 import UbigeoPage from './pages/UbigeoPage';
+import ChatPage from './pages/ChatPage';
 import NotFound from './pages/NotFound';
 
 const PAGE_TITLES: Record<string, string> = {
@@ -17,6 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/candidatos': 'Candidatos',
   '/prediccion': 'Predicción',
   '/historial': 'Historial',
+  '/chat': 'Asistente IA',
   '/about': 'Acerca de',
   '/API_DOCS': 'API Documentation',
   '/ubigeo': 'Códigos UBIGEO',
@@ -44,6 +46,7 @@ export default function App() {
           <Route path="/prediccion" element={<PrediccionPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/historial" element={<HistorialPage />} />
+          <Route path="/chat" element={<ChatPage />} />
           <Route path="/API_DOCS" element={<APIPage />} />
           <Route path="/ubigeo" element={<UbigeoPage />} />
           <Route path="*" element={<NotFound />} />

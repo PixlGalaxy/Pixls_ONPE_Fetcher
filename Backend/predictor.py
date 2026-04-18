@@ -215,6 +215,8 @@ def _run_simulations(
 
     region_estimates = []
     for r in regions:
+        if r.get("ubigeo") == "abroad":
+            continue
         ext = _extrapolate_region(r)
         if ext:
             region_estimates.append({
@@ -234,8 +236,7 @@ def _run_simulations(
     nat_actas_total = nat_actas.get("actas_total", 0)
     votes_per_acta = _safe_div(nat_total_valid, nat_actas_counted)
     nat_remaining = nat_actas_total - nat_actas_counted
-    nat_est_remaining_votes = votes_per_acta * nat_remaining
-    nat_est_total = nat_total_valid + nat_est_remaining_votes
+    nat_est_total = nat_total_valid + votes_per_acta * nat_remaining
 
     baseline = {}
     for cid in cand_ids:
@@ -251,7 +252,7 @@ def _run_simulations(
             baseline[cid] *= scale
 
     remaining_fraction = max(0.001, (100.0 - nat_actas_pct) / 100.0)
-    base_uncertainty = remaining_fraction ** 0.5  # moderate decay
+    base_uncertainty = remaining_fraction
 
     total_remaining_actas = sum(r.get("actas_remaining", 0) for r in region_estimates)
     regional_variance = {}
@@ -287,7 +288,7 @@ def _run_simulations(
 
             regional_sigma = regional_variance.get(cid, 0.5 * remaining_fraction)
           
-            hist_sigma = trend["volatility"] * base_uncertainty * 10.0
+            hist_sigma = trend["volatility"] * base_uncertainty * 4.0
 
             combined_sigma = math.sqrt(regional_sigma ** 2 + hist_sigma ** 2)
       
@@ -295,7 +296,7 @@ def _run_simulations(
 
             noise_pct_points = random.gauss(0, combined_sigma)
 
-            momentum_bias = trend["momentum"] * remaining_fraction * 5.0
+            momentum_bias = trend["momentum"] * remaining_fraction * 2.0
 
             shift_votes = (noise_pct_points + momentum_bias) * nat_est_total / 100.0
             estimated = base + shift_votes

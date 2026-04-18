@@ -49,8 +49,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://devapp.zaylar.com",
+        "https://itzgalaxy.com",
         "http://localhost:5173",
         "http://localhost:5000",
+        "*",
     ],
     allow_credentials=True,
     allow_methods=["*"],

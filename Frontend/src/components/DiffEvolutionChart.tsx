@@ -1,18 +1,27 @@
 import { useMemo } from 'react';
+import { TrendingUp } from 'lucide-react';
 import {
   ResponsiveContainer,
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
 } from 'recharts';
-import { type Timeline, SHORT_NAMES, getCandidateColorByKey } from '../types/election';
 
-interface Props {
-  timeline: Timeline;
+export interface DiffItem {
+  actas_pct: number;
+  diff_1v2: number;
+  diff_2v3: number;
+  diff_3v4: number;
 }
+
+const DIFF_SERIES = [
+  { key: 'diff_1v2' as const, label: '1° vs 2°', color: '#E8943A' },
+  { key: 'diff_2v3' as const, label: '2° vs 3°', color: '#4A90D9' },
+  { key: 'diff_3v4' as const, label: '3° vs 4°', color: '#B07CD8' },
+];
 
 const TOOLTIP_STYLE: React.CSSProperties = {
   background: '#1C1E23',
@@ -24,45 +33,36 @@ const TOOLTIP_STYLE: React.CSSProperties = {
   boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
 };
 
-function CandidateTooltip({
+function DiffTooltip({
   active,
   payload,
   label,
-  candidateKeys,
 }: {
   active?: boolean;
   payload?: { dataKey: string; value: number }[];
   label?: number;
-  candidateKeys: string[];
 }) {
   if (!active || !payload?.length) return null;
-
-  const sorted = [...candidateKeys].sort((a, b) => {
-    const av = payload.find((p) => p.dataKey === a)?.value ?? 0;
-    const bv = payload.find((p) => p.dataKey === b)?.value ?? 0;
-    return bv - av;
-  });
-
   return (
     <div style={TOOLTIP_STYLE}>
       <div style={{ color: '#8A8F98', marginBottom: 6, fontSize: 10 }}>
         {Number(label).toFixed(2)}% actas
       </div>
-      {sorted.map((key) => {
-        const entry = payload.find((p) => p.dataKey === key);
+      {DIFF_SERIES.map((cfg) => {
+        const entry = payload.find((p) => p.dataKey === cfg.key);
         return (
           <div
-            key={key}
+            key={cfg.key}
             style={{
               display: 'flex',
               justifyContent: 'space-between',
               gap: 20,
-              color: getCandidateColorByKey(key),
+              color: cfg.color,
               marginBottom: 2,
             }}
           >
-            <span>{SHORT_NAMES[key] ?? key}</span>
-            <span style={{ fontWeight: 600 }}>{(entry?.value ?? 0).toFixed(3)}%</span>
+            <span>{cfg.label}</span>
+            <span style={{ fontWeight: 600 }}>{(entry?.value ?? 0).toFixed(3)} pp</span>
           </div>
         );
       })}
@@ -70,38 +70,38 @@ function CandidateTooltip({
   );
 }
 
-export default function TimelineChart({ timeline }: Props) {
-  const candidateKeys = useMemo(
-    () => Object.keys(timeline.cuts[0]?.candidates ?? {}),
-    [timeline],
-  );
-
+export default function DiffEvolutionChart({ diffData }: { diffData: DiffItem[] }) {
   const data = useMemo(() => {
-    const raw = timeline.cuts.map((cut) => {
-      const point: Record<string, number> = { actas_pct: cut.actas_pct };
-      for (const key of candidateKeys) {
-        point[key] = cut.candidates[key] ?? 0;
-      }
-      return point;
-    });
-    const deduped = new Map<number, Record<string, number>>();
-    for (const d of [...raw].sort((a, b) => a.actas_pct - b.actas_pct)) {
+    const deduped = new Map<number, DiffItem>();
+    for (const d of [...diffData].sort((a, b) => a.actas_pct - b.actas_pct)) {
       deduped.set(d.actas_pct, d);
     }
     return [...deduped.values()];
-  }, [timeline, candidateKeys]);
+  }, [diffData]);
 
   return (
     <div
       className="rounded-[var(--radius)] p-4 border animate-fade-up"
       style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
     >
-      <h3 className="text-[13px] font-semibold mb-4" style={{ color: 'var(--tx2)' }}>
-        Evolución del conteo — % por candidato
+      <h3
+        className="text-[13px] font-semibold mb-4 flex items-center gap-2"
+        style={{ color: 'var(--tx2)' }}
+      >
+        <TrendingUp size={14} style={{ color: 'var(--c-fuji)' }} />
+        Diferencia entre posiciones (puntos porcentuales)
       </h3>
 
-      <ResponsiveContainer width="100%" height={280}>
-        <LineChart data={data} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
+      <ResponsiveContainer width="100%" height={220}>
+        <AreaChart data={data} margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
+          <defs>
+            {DIFF_SERIES.map((cfg) => (
+              <linearGradient key={cfg.key} id={`grad-${cfg.key}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor={cfg.color} stopOpacity={0.25} />
+                <stop offset="95%" stopColor={cfg.color} stopOpacity={0.02} />
+              </linearGradient>
+            ))}
+          </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
           <XAxis
             dataKey="actas_pct"
@@ -112,48 +112,48 @@ export default function TimelineChart({ timeline }: Props) {
             axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
           />
           <YAxis
-            tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
+            tickFormatter={(v) => `${Number(v).toFixed(1)}`}
             tick={{ fill: '#8A8F98', fontSize: 10, fontFamily: 'DM Mono, monospace' }}
             stroke="rgba(255,255,255,0.08)"
             tickLine={false}
             axisLine={false}
-            width={44}
+            width={36}
           />
           <Tooltip
             content={(props) => (
-              <CandidateTooltip
+              <DiffTooltip
                 active={props.active}
                 payload={props.payload as unknown as { dataKey: string; value: number }[]}
                 label={props.label as number}
-                candidateKeys={candidateKeys}
               />
             )}
             cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
           />
-          {candidateKeys.map((key) => (
-            <Line
-              key={key}
+          {DIFF_SERIES.map((cfg) => (
+            <Area
+              key={cfg.key}
               type="monotone"
-              dataKey={key}
-              stroke={getCandidateColorByKey(key)}
+              dataKey={cfg.key}
+              stroke={cfg.color}
               strokeWidth={2}
+              fill={`url(#grad-${cfg.key})`}
               dot={false}
-              activeDot={{ r: 4, strokeWidth: 0, fill: getCandidateColorByKey(key) }}
+              activeDot={{ r: 4, strokeWidth: 0, fill: cfg.color }}
               isAnimationActive={false}
             />
           ))}
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
 
-      <div className="flex flex-wrap gap-3 mt-3">
-        {candidateKeys.map((key) => (
+      <div className="flex flex-wrap gap-4 mt-3">
+        {DIFF_SERIES.map((cfg) => (
           <div
-            key={key}
+            key={cfg.key}
             className="flex items-center gap-1.5 text-[10px]"
             style={{ color: 'var(--tx2)' }}
           >
-            <div className="w-3 h-[2px] rounded-full" style={{ background: getCandidateColorByKey(key) }} />
-            {SHORT_NAMES[key] ?? key}
+            <div className="w-3 h-[2px] rounded-full" style={{ background: cfg.color }} />
+            {cfg.label}
           </div>
         ))}
       </div>

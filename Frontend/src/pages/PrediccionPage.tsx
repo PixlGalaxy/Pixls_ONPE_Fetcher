@@ -163,7 +163,7 @@ export default function PrediccionPage() {
         <div className="flex items-center gap-2">
           {predictionTime && (
             <span className="text-[10px]" style={{ color: 'var(--tx3)' }}>
-              Última predicción: {predictionTime}
+              Última Predicción: {predictionTime}
             </span>
           )}
           <button

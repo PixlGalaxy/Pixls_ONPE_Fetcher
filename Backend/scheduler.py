@@ -203,7 +203,7 @@ def _scheduler_loop() -> None:
 
                 if changed:
                     logger.info(
-                        "[SCHEDULER] Actas % changed: %.3f%% → %.3f%%. Triggering full refresh.",
+                        "[SCHEDULER] Actas %% changed: %.3f%% -> %.3f%%. Triggering full refresh.",
                         prev or 0.0,
                         current_pct,
                     )

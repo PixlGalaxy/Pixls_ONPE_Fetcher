@@ -99,7 +99,7 @@ GEO_FILTER = {
 # ── Scheduler settings ─────────────────────────────────────────────────────
 POLL_INTERVAL_SECONDS = 60      
 POLL_JITTER_SECONDS = 15       
-MIN_PCT_CHANGE_TO_SAVE = 0.001       
+MIN_PCT_CHANGE_TO_SAVE = 0.0001
 
 # ── Selenium settings ──────────────────────────────────────────────────────
 SELENIUM_HEADLESS = True

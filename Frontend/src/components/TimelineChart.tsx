@@ -76,7 +76,7 @@ export default function TimelineChart({ timeline }: Props) {
     [timeline],
   );
 
-  const data = useMemo(() => {
+  const { data, yMin } = useMemo(() => {
     const raw = timeline.cuts.map((cut) => {
       const point: Record<string, number> = { actas_pct: cut.actas_pct };
       for (const key of candidateKeys) {
@@ -88,7 +88,18 @@ export default function TimelineChart({ timeline }: Props) {
     for (const d of [...raw].sort((a, b) => a.actas_pct - b.actas_pct)) {
       deduped.set(d.actas_pct, d);
     }
-    return [...deduped.values()];
+    const points = [...deduped.values()];
+    let globalMin = Infinity;
+    for (const point of points) {
+      for (const key of candidateKeys) {
+        const v = point[key] ?? 0;
+        if (v > 0 && v < globalMin) globalMin = v;
+      }
+    }
+    return {
+      data: points,
+      yMin: globalMin === Infinity ? 0 : Math.floor((globalMin - 1.0) * 10) / 10,
+    };
   }, [timeline, candidateKeys]);
 
   return (
@@ -112,6 +123,7 @@ export default function TimelineChart({ timeline }: Props) {
             axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
           />
           <YAxis
+            domain={[yMin, 'auto']}
             tickFormatter={(v) => `${Number(v).toFixed(1)}%`}
             tick={{ fill: '#8A8F98', fontSize: 10, fontFamily: 'DM Mono, monospace' }}
             stroke="rgba(255,255,255,0.08)"

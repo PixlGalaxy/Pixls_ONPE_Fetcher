@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import threading
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -9,10 +10,15 @@ from config import BASE_DIR, DATA_DIR
 
 logger = logging.getLogger(__name__)
 
+# ── Env config ────────────────────────────────────────────────────────────────
+
+ACTAS_ENABLED  = os.getenv("ACTAS_ENABLED", "true").strip().lower() not in ("false", "0", "no")
+_data_dir_env  = os.getenv("ACTAS_DATA_DIR", "").strip()
+ACTAS_DATA_DIR = Path(_data_dir_env) if _data_dir_env else BASE_DIR / "Actas_Data"
+
 # ── Paths ─────────────────────────────────────────────────────────────────────
 
-STATUS_PATH    = DATA_DIR / "actas_status.json"
-ACTAS_DATA_DIR = BASE_DIR / "Actas_Data"
+STATUS_PATH = DATA_DIR / "actas_status.json"
 
 _PERU_TOTAL_DISTRICTS = 1874
 
@@ -202,6 +208,9 @@ def _run_download(trigger_pct: float, resume: bool) -> None:
 def notify_pct_change(new_pct: float) -> None:
     global _thread, _status, _needs_first_download
 
+    if not ACTAS_ENABLED:
+        return
+
     new_int = int(new_pct)
 
     with _lock:
@@ -262,6 +271,10 @@ def notify_pct_change(new_pct: float) -> None:
 
 def start() -> None:
     global _status, _needs_first_download
+
+    if not ACTAS_ENABLED:
+        logger.info("[ACTAS] Disabled ACTAS_ENABLED=false — no actas will be downloaded")
+        return
 
     _status = _load_status()
 

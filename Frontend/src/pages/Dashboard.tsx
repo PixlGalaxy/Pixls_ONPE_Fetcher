@@ -293,19 +293,19 @@ export default function Dashboard() {
             {lastCheck && (
               <span className="flex items-center gap-1">
                 <Clock size={10} style={{ color: 'var(--clock)', opacity: 0.6 }} />
-                Último Fetch De ONPE: {lastCheck}
+                Último Fetch: {lastCheck}
               </span>
             )}
             {countdown && (
               <span className="flex items-center gap-1 font-mono">
                 <Timer size={10} style={{ color: 'var(--clock)',opacity: 0.6 }} />
-                Próximo Fetch De ONPE: {countdown}
+                Próximo Fetch: {countdown}
               </span>
             )}
             {lastChange && (
               <span className="flex items-center gap-1">
                 <Zap size={10} style={{ color: 'var(--lightning)', opacity: 0.7 }} />
-                ONPE Actualizó: {lastChange}
+                Última Actualización De Cache: {lastChange}
               </span>
             )}
           </div>

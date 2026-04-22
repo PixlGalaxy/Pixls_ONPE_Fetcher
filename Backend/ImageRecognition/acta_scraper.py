@@ -446,17 +446,41 @@ class ActaScraper:
                             f.write(chunk)
                     return True
                 if resp.status_code == 403:
-                    import re as _re
-                    expires_match = _re.search(r'X-Amz-Expires=(\d+)', s3_url)
-                    ttl = expires_match.group(1) if expires_match else "?"
-                    body = resp.text[:300].replace("\n", " ")
-                    logger.warning("S3 403 — TTL=%ss  body: %s", ttl, body)
+                    logger.warning("S3 403 (SignatureDoesNotMatch via requests); se reintentará por browser")
                     return False
                 logger.warning("S3 HTTP %d attempt %d/%d", resp.status_code, attempt, self.max_retries)
             except requests.RequestException as e:
                 logger.warning("S3 error attempt %d: %s", attempt, e)
             time.sleep(2 ** attempt)
         return False
+
+    def _download_via_browser(self, s3_url: str, dest_path: Path) -> bool:
+        """Descarga usando Chrome fetch() — evita la normalización de URL de requests/urllib."""
+        try:
+            result = self.driver.execute_async_script("""
+                const [url, done] = arguments;
+                fetch(url, {mode: 'cors'})
+                    .then(r => {
+                        if (!r.ok) { done({ok: false, status: r.status}); return; }
+                        return r.arrayBuffer();
+                    })
+                    .then(buf => {
+                        if (!buf) return;
+                        const bytes = Array.from(new Uint8Array(buf));
+                        done({ok: true, bytes: bytes});
+                    })
+                    .catch(e => done({ok: false, error: String(e)}));
+            """, s3_url)
+            if not result or not result.get("ok"):
+                logger.warning("Browser download failed: %s", result)
+                return False
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(dest_path, "wb") as f:
+                f.write(bytes(result["bytes"]))
+            return True
+        except Exception as exc:
+            logger.warning("Browser download error: %s", exc)
+            return False
 
     # ── Location pipeline ─────────────────────────────────────────────────────
 
@@ -591,7 +615,11 @@ class ActaScraper:
         for task in retry_tasks:
             _, dest_path, elec_folder, mesa, description, file_id, filename = task
             s3_url2 = self.get_s3_url(file_id)
-            ok = bool(s3_url2 and self.download_from_s3(s3_url2, dest_path))
+            ok = False
+            if s3_url2:
+                ok = self.download_from_s3(s3_url2, dest_path)
+                if not ok:
+                    ok = self._download_via_browser(s3_url2, dest_path)
             status = "OK" if ok else "ERROR"
             self._log_dl(scope, n1, n2, n3, elec_folder, mesa,
                          description, file_id, str(dest_path), filename, status)

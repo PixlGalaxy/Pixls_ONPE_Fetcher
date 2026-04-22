@@ -153,3 +153,69 @@ def save_abroad(election_key: str, snapshot: dict) -> None:
 
 def load_abroad(election_key: str) -> Optional[dict]:
     return _read(_election_dir(election_key) / "geographic" / "abroad.json")
+
+
+# ── Timeline builder ──────────────────────────────────────────────────────
+
+_ID_TO_KEY: dict[str, str] = {
+    "10001088": "fuji",
+    "07845838": "rla",
+    "06506278": "nieto",
+    "09177250": "belm",
+    "16002918": "sanch",
+}
+
+
+def build_and_save_timeline(election_key: str) -> None:
+    snapshots = load_history(election_key)
+    if not snapshots:
+        return
+
+    candidate_info: dict[str, dict] = {}
+    total_actas = 0
+    cuts = []
+
+    for snap in snapshots:
+        actas = snap.get("actas", {})
+        pct = actas.get("actas_contabilizadas_pct", 0.0)
+        contabilizadas = actas.get("actas_contabilizadas", 0)
+        jee = actas.get("actas_enviadas_jee", 0) or 0
+        votos_emitidos = actas.get("total_votes_cast", 0) or 0
+        total_actas = max(total_actas, actas.get("actas_total", 0))
+
+        cand_pcts: dict[str, float] = {}
+        for c in snap.get("candidates", []):
+            cid = c.get("candidate_id", "")
+            key = _ID_TO_KEY.get(cid)
+            if not key:
+                continue
+            cand_pcts[key] = c.get("percentage", 0.0)
+            if key not in candidate_info:
+                candidate_info[key] = {
+                    "candidate_id": cid,
+                    "name": c.get("name", ""),
+                    "party": c.get("party", ""),
+                }
+
+        cuts.append({
+            "ts": snap.get("snapshot_time", ""),
+            "actas_pct": pct,
+            "contabilizadas": contabilizadas,
+            "jee": jee,
+            "votos_emitidos": votos_emitidos,
+            "candidates": cand_pcts,
+        })
+
+    cuts.sort(key=lambda c: c["actas_pct"])
+
+    timeline = {
+        "description": "Historical evolution of national candidate % per actas cut",
+        "total_actas": total_actas,
+        "candidate_info": candidate_info,
+        "cuts_count": len(cuts),
+        "cuts": cuts,
+    }
+
+    _write(_election_dir(election_key) / "timeline.json", timeline)
+    logger.info("[TIMELINE] Rebuilt %s timeline: %d cuts, last=%.3f%%",
+                election_key, len(cuts), cuts[-1]["actas_pct"] if cuts else 0)

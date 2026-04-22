@@ -71,12 +71,22 @@ function DiffTooltip({
 }
 
 export default function DiffEvolutionChart({ diffData }: { diffData: DiffItem[] }) {
-  const data = useMemo(() => {
+  const { data, yMax } = useMemo(() => {
     const deduped = new Map<number, DiffItem>();
     for (const d of [...diffData].sort((a, b) => a.actas_pct - b.actas_pct)) {
       deduped.set(d.actas_pct, d);
     }
-    return [...deduped.values()];
+    const points = [...deduped.values()];
+    let globalMax = -Infinity;
+    for (const p of points) {
+      if (p.diff_1v2 > globalMax) globalMax = p.diff_1v2;
+      if (p.diff_2v3 > globalMax) globalMax = p.diff_2v3;
+      if (p.diff_3v4 > globalMax) globalMax = p.diff_3v4;
+    }
+    return {
+      data: points,
+      yMax: globalMax === -Infinity ? 'auto' : Math.ceil((globalMax + 2.5) * 10) / 10,
+    };
   }, [diffData]);
 
   return (
@@ -112,6 +122,7 @@ export default function DiffEvolutionChart({ diffData }: { diffData: DiffItem[] 
             axisLine={{ stroke: 'rgba(255,255,255,0.08)' }}
           />
           <YAxis
+            domain={[-2, yMax]}
             tickFormatter={(v) => `${Number(v).toFixed(1)}`}
             tick={{ fill: '#8A8F98', fontSize: 10, fontFamily: 'DM Mono, monospace' }}
             stroke="rgba(255,255,255,0.08)"

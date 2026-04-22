@@ -105,9 +105,22 @@ def load_current(election_key: str) -> Optional[dict]:
 
 
 def save_history_snapshot(election_key: str, snapshot: dict, actas_pct: float) -> None:
+    hdir = _history_dir(election_key)
+    if hdir.exists():
+        existing_files = sorted(hdir.glob("*.json"))
+        if existing_files:
+            latest = _read(existing_files[-1])
+            if latest:
+                latest_pct = latest.get("actas", {}).get("actas_contabilizadas_pct", -1)
+                if abs(latest_pct - actas_pct) < 0.001:
+                    logger.debug(
+                        "[HISTORY] Skipping duplicate snapshot for %s at %.3f%%",
+                        election_key, actas_pct,
+                    )
+                    return
     ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     filename = f"{actas_pct:.3f}_{ts}.json"
-    _write(_history_dir(election_key) / filename, snapshot)
+    _write(hdir / filename, snapshot)
     logger.info("[HISTORY] %s/%s", election_key, filename)
 
 

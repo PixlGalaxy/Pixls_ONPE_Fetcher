@@ -1,10 +1,12 @@
 import csv
+import http.client
 import json
 import logging
 import os
 import re
 import threading
 import time
+import urllib.parse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timedelta
@@ -430,32 +432,41 @@ class ActaScraper:
     # ── Download ──────────────────────────────────────────────────────────────
 
     def download_from_s3(self, s3_url: str, dest_path: Path) -> bool:
-        headers = {
+        parsed = urllib.parse.urlparse(s3_url)
+        path_qs = parsed.path + ("?" + parsed.query if parsed.query else "")
+        req_headers = {
             "User-Agent": (
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                 "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
             ),
+            "Host": parsed.netloc,
         }
         for attempt in range(1, self.max_retries + 1):
+            conn = None
             try:
-                resp = self._session.get(s3_url, headers=headers, stream=True, timeout=60)
-                if resp.status_code == 200:
+                conn = http.client.HTTPSConnection(parsed.netloc, timeout=60)
+                conn.request("GET", path_qs, headers=req_headers)
+                resp = conn.getresponse()
+                if resp.status == 200:
                     dest_path.parent.mkdir(parents=True, exist_ok=True)
                     with open(dest_path, "wb") as f:
-                        for chunk in resp.iter_content(chunk_size=16384):
+                        while chunk := resp.read(16384):
                             f.write(chunk)
                     return True
-                if resp.status_code == 403:
-                    logger.warning("S3 403 (SignatureDoesNotMatch via requests); se reintentará por browser")
+                if resp.status == 403:
+                    body = resp.read(200).decode("utf-8", errors="replace").replace("\n", " ")
+                    logger.warning("S3 403 — %s", body[:120])
                     return False
-                logger.warning("S3 HTTP %d attempt %d/%d", resp.status_code, attempt, self.max_retries)
-            except requests.RequestException as e:
+                logger.warning("S3 HTTP %d attempt %d/%d", resp.status, attempt, self.max_retries)
+            except Exception as e:
                 logger.warning("S3 error attempt %d: %s", attempt, e)
+            finally:
+                if conn:
+                    conn.close()
             time.sleep(2 ** attempt)
         return False
 
     def _download_via_browser(self, s3_url: str, dest_path: Path) -> bool:
-        """Descarga usando Chrome fetch() — evita la normalización de URL de requests/urllib."""
         try:
             result = self.driver.execute_async_script("""
                 const [url, done] = arguments;

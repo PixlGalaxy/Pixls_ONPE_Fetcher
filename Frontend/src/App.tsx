@@ -12,6 +12,7 @@ const AboutPage = lazy(() => import('./pages/AboutPage'));
 const APIPage = lazy(() => import('./pages/APIPage'));
 const UbigeoPage = lazy(() => import('./pages/UbigeoPage'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
+const ResultadosPeru2026 = lazy(() => import('./pages/ResultadosPeru2026'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 const PAGE_TITLES: Record<string, string> = {
@@ -24,6 +25,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/about': 'Acerca de',
   '/API_DOCS': 'API Documentation',
   '/ubigeo': 'Códigos UBIGEO',
+  '/resultados-elecciones-peru-2026': 'Resultados en tiempo real de las elecciones Perú 2026',
 };
 
 function TitleUpdater() {
@@ -99,6 +101,7 @@ export default function App() {
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/API_DOCS" element={<APIPage />} />
             <Route path="/ubigeo" element={<UbigeoPage />} />
+            <Route path="/resultados-elecciones-peru-2026" element={<ResultadosPeru2026 />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

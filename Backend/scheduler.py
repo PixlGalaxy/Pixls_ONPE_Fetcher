@@ -32,7 +32,17 @@ _next_tick_time: Optional[datetime] = None      # when the next poll will happen
 
 def _load_last_known_pct() -> Optional[float]:
     meta = storage.load_metadata()
-    return meta.get("elections", {}).get("presidential", {}).get("last_actas_pct")
+    pct = meta.get("elections", {}).get("presidential", {}).get("last_actas_pct")
+    if pct is not None:
+        return pct
+    hdir = storage._history_dir("presidential")
+    if hdir.exists():
+        files = sorted(hdir.glob("*.json"))
+        if files:
+            data = storage._read(files[-1])
+            if data:
+                return data.get("actas", {}).get("actas_contabilizadas_pct")
+    return None
 
 # ── Core fetch helpers ─────────────────────────────────────────────────────
 

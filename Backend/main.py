@@ -16,10 +16,13 @@ from pydantic import BaseModel
 import scheduler
 import storage
 import predictor
-from config import ELECTIONS
+from config import DATA_DIR, ELECTIONS
 from AI.rag import rag_engine
 
 load_dotenv(Path(__file__).parent / ".env")
+
+LOG_PATH = DATA_DIR / "logs" / "onpe_backend.log"
+LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 OLLAMA_URL: str = os.getenv("OLLAMA_URL", "http://localhost:11434")
 LLM_MODEL: str = os.getenv("OLLAMA_LLM_MODEL", "llama3.2")
@@ -51,7 +54,7 @@ logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
     handlers=[
-        logging.FileHandler("onpe_backend.log", encoding="utf-8"),
+        logging.FileHandler(LOG_PATH, encoding="utf-8"),
         logging.StreamHandler(sys.stdout),
     ],
 )
@@ -79,7 +82,7 @@ def _configure_uvicorn_logging() -> None:
 
     stream_handler = logging.StreamHandler(sys.stdout)
     stream_handler.setFormatter(formatter)
-    file_handler = logging.FileHandler("onpe_backend.log", encoding="utf-8")
+    file_handler = logging.FileHandler(LOG_PATH, encoding="utf-8")
     file_handler.setFormatter(formatter)
 
     access.addHandler(stream_handler)

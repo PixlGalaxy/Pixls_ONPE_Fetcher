@@ -255,6 +255,24 @@ def get_scheduler_info() -> dict:
 
 # ── Public lifecycle API ──────────────────────────────────────────────────
 
+def _rebuild_timeline_if_stale() -> None:
+    try:
+        meta = storage.load_metadata()
+        current_pct = meta.get("elections", {}).get("presidential", {}).get("last_actas_pct")
+        if current_pct is None:
+            return
+        timeline = storage._read(storage._election_dir("presidential") / "timeline.json")
+        timeline_pct = timeline["cuts"][-1]["actas_pct"] if timeline and timeline.get("cuts") else None
+        if timeline_pct is None or abs(current_pct - timeline_pct) >= 0.001:
+            logger.info(
+                "[TIMELINE] Stale detected (timeline=%.3f%% vs current=%.3f%%). Rebuilding…",
+                timeline_pct or 0, current_pct,
+            )
+            storage.build_and_save_timeline("presidential")
+    except Exception as exc:
+        logger.error("[TIMELINE] Startup rebuild failed: %s", exc)
+
+
 def start() -> None:
     global _thread
     if _thread and _thread.is_alive():
@@ -265,6 +283,9 @@ def start() -> None:
     _thread.start()
     logger.info("[SCHEDULER] Started.")
 
+    threading.Thread(
+        target=_rebuild_timeline_if_stale, name="timeline-startup", daemon=True
+    ).start()
     threading.Thread(
         target=_run_prediction_safe, name="predictor-startup", daemon=True
     ).start()

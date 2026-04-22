@@ -54,10 +54,10 @@ export default function Dashboard() {
   const trends = useMemo(() => {
     const map: Record<string, CandidateTrend> = {};
     if (!current || history.length === 0) return map;
-    const sorted = [...history].sort((a, b) =>
-      new Date(b.snapshot_time).getTime() - new Date(a.snapshot_time).getTime()
-    );
-    const prev = sorted.find(s => s.snapshot_time !== current.snapshot_time) ?? sorted[0];
+    const currentTime = new Date(current.snapshot_time).getTime();
+    const prev = [...history]
+      .filter(s => new Date(s.snapshot_time).getTime() < currentTime)
+      .sort((a, b) => new Date(b.snapshot_time).getTime() - new Date(a.snapshot_time).getTime())[0];
     if (!prev) return map;
     for (const c of current.candidates) {
       const prevC = prev.candidates.find(p => p.candidate_id === c.candidate_id);
@@ -71,7 +71,7 @@ export default function Dashboard() {
     return map;
   }, [current, history]);
 
-  const lastUpdate = status?.elections?.presidential?.last_snapshot_time;
+  const lastUpdate = current?.snapshot_time ?? status?.elections?.presidential?.last_snapshot_time;
   const formatted = lastUpdate
     ? new Date(lastUpdate).toLocaleString('es-PE', {
         day: '2-digit', month: '2-digit', year: 'numeric',

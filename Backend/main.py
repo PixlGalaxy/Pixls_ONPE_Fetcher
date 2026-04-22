@@ -266,7 +266,7 @@ def get_region(ubigeo: str, election: str = Query(default="presidential")):
     return data
 
 
-@app.get("/geographic/provinces/{ubigeo}")
+@app.get("/geographic/provinces/{ubigeo}", include_in_schema=False)
 def get_province(ubigeo: str, election: str = Query(default="presidential")):
     _require_election(election)
     cached = storage.load_geographic(election, "provinces", ubigeo)
@@ -279,7 +279,7 @@ def get_province(ubigeo: str, election: str = Query(default="presidential")):
     return snapshot
 
 
-@app.get("/geographic/districts/{ubigeo}")
+@app.get("/geographic/districts/{ubigeo}", include_in_schema=False)
 def get_district(ubigeo: str, election: str = Query(default="presidential")):
     _require_election(election)
     cached = storage.load_geographic(election, "districts", ubigeo)

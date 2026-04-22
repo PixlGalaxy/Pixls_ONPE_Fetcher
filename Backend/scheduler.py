@@ -65,7 +65,10 @@ def _fetch_and_store_national(election_key: str) -> Optional[float]:
     prev_pct = meta.get("elections", {}).get(election_key, {}).get("last_actas_pct")
     if prev_pct is None or abs(pct - prev_pct) >= MIN_PCT_CHANGE_TO_SAVE:
         storage.save_history_snapshot(election_key, snapshot, pct)
-        storage.build_and_save_timeline(election_key)
+        try:
+            storage.build_and_save_timeline(election_key)
+        except Exception as exc:
+            logger.error("[SCHEDULER] Timeline rebuild failed for %s: %s", election_key, exc)
         meta["elections"][election_key]["snapshot_count"] = (
             meta["elections"][election_key].get("snapshot_count", 0) + 1
         )
@@ -142,13 +145,11 @@ def _full_refresh() -> None:
 
     _fetch_and_store_regions("presidential")
 
-    threading.Thread(
-        target=_run_prediction_safe, name="predictor", daemon=True
-    ).start()
-
     meta = storage.load_metadata()
     meta["last_full_fetch"] = datetime.now(timezone.utc).isoformat()
     storage.save_metadata(meta)
+
+    _run_prediction_safe()
 
     if pcts:
         logger.info(
@@ -160,8 +161,7 @@ def _full_refresh() -> None:
 
 def _quick_check_presidential_pct() -> Optional[float]:
     try:
-        raw = fetcher.fetch_national("presidential")
-        totales = raw["totales"]
+        totales = fetcher.fetch_national_totales_only("presidential")
         return float(totales.get("actasContabilizadas", 0.0))
     except Exception as exc:
         logger.warning("[SCHEDULER] quick check failed: %s", exc)
@@ -304,10 +304,9 @@ def trigger_now() -> None:
     try:
         _full_refresh()
         rag_engine.trigger_rebuild()
-        pct = _quick_check_presidential_pct()
         with _lock:
             global _last_known_pct
-            _last_known_pct = pct
+            _last_known_pct = _load_last_known_pct()
     except Exception as exc:
         logger.error("[SCHEDULER] Manual refresh failed: %s", exc, exc_info=True)
         raise

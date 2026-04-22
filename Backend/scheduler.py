@@ -310,12 +310,12 @@ def stop() -> None:
 
 
 def trigger_now() -> None:
+    global _last_known_pct
     logger.info("[SCHEDULER] Manual refresh triggered.")
     try:
         _full_refresh()
         rag_engine.trigger_rebuild()
         with _lock:
-            global _last_known_pct
             _last_known_pct = _load_last_known_pct()
     except Exception as exc:
         logger.error("[SCHEDULER] Manual refresh failed: %s", exc, exc_info=True)

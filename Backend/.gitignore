@@ -7,6 +7,8 @@ venv/
 
 # Data directory (large, machine-specific)
 data/
+Actas_Data/
+Old/
 
 # Logs
 logs

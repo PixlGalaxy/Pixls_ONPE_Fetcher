@@ -35,8 +35,14 @@ class RAGEngine:
         async with self._lock:
             if self._ready:
                 return
-            await self._rebuild_if_needed()
-            self._ready = True
+            stored_ts = self.store.load()
+            if stored_ts and self.store.texts:
+                logger.info("[RAG] Vectorstore restored at startup (%d chunks, ts=%s)", len(self.store.texts), stored_ts)
+                self._ready = True
+            else:
+                logger.info("[RAG] No vectorstore on disk, building from scratch…")
+                await self._rebuild_if_needed()
+                self._ready = True
 
     def trigger_rebuild(self) -> None:
         if self._loop and self._loop.is_running():

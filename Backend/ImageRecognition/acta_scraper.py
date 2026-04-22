@@ -446,7 +446,11 @@ class ActaScraper:
                             f.write(chunk)
                     return True
                 if resp.status_code == 403:
-                    logger.warning("S3 403 — URL host: %s", s3_url.split("/")[2] if "://" in s3_url else s3_url[:60])
+                    import re as _re
+                    expires_match = _re.search(r'X-Amz-Expires=(\d+)', s3_url)
+                    ttl = expires_match.group(1) if expires_match else "?"
+                    body = resp.text[:300].replace("\n", " ")
+                    logger.warning("S3 403 — TTL=%ss  body: %s", ttl, body)
                     return False
                 logger.warning("S3 HTTP %d attempt %d/%d", resp.status_code, attempt, self.max_retries)
             except requests.RequestException as e:

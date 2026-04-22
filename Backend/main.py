@@ -13,14 +13,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
+load_dotenv(Path(__file__).parent / ".env")
+
 import actas_controller
 import scheduler
 import storage
 import predictor
 from config import BASE_DIR, DATA_DIR, ELECTIONS
 from AI.rag import rag_engine
-
-load_dotenv(Path(__file__).parent / ".env")
 
 LOG_PATH = DATA_DIR / "logs" / "onpe_backend.log"
 LOG_PATH.parent.mkdir(parents=True, exist_ok=True)

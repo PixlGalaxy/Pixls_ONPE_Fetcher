@@ -64,7 +64,6 @@ def _configure_uvicorn_logging() -> None:
 
     class _AccessMsgFilter(logging.Filter):
         def filter(self, record: logging.LogRecord) -> bool:
-            # uvicorn pasa: (client_addr, method, path, http_version, status_code)
             args = record.args
             if isinstance(args, tuple) and len(args) == 5:
                 client, method, path, http_ver, status = args
@@ -234,7 +233,6 @@ def get_election_history(election_key: str):
 
 @app.get("/elections/{election_key}/timeline")
 def get_election_timeline(election_key: str):
-    """Return the consolidated timeline.json for charting."""
     _require_election(election_key)
     data = storage._read(storage._election_dir(election_key) / "timeline.json")
     if data is None:
@@ -270,10 +268,6 @@ def get_region(ubigeo: str, election: str = Query(default="presidential")):
 
 @app.get("/geographic/provinces/{ubigeo}")
 def get_province(ubigeo: str, election: str = Query(default="presidential")):
-    """
-    Returns cached province data if available; otherwise fetches from ONPE
-    on demand and caches the result.
-    """
     _require_election(election)
     cached = storage.load_geographic(election, "provinces", ubigeo)
     if cached:
@@ -287,10 +281,6 @@ def get_province(ubigeo: str, election: str = Query(default="presidential")):
 
 @app.get("/geographic/districts/{ubigeo}")
 def get_district(ubigeo: str, election: str = Query(default="presidential")):
-    """
-    Returns cached district data if available; otherwise fetches from ONPE
-    on demand and caches the result.
-    """
     _require_election(election)
     cached = storage.load_geographic(election, "districts", ubigeo)
     if cached:
@@ -318,7 +308,6 @@ def get_abroad(election: str = Query(default="presidential")):
 
 @app.post("/fetch/now")
 def force_fetch():
-    """Trigger an immediate full refresh from ONPE."""
     try:
         scheduler.trigger_now()
     except Exception as exc:
@@ -330,7 +319,6 @@ def force_fetch():
 
 @app.get("/predictions")
 def get_predictions():
-    """Return the latest prediction results."""
     data = storage._read(predictor.PREDICTION_PATH)
     if data is None:
         raise HTTPException(status_code=404, detail="No prediction data yet.")
@@ -339,10 +327,9 @@ def get_predictions():
 
 @app.post("/predictions/run")
 def run_prediction_now():
-    """Force a new prediction run."""
     result = predictor.run_prediction()
     if result is None:
-        raise HTTPException(status_code=500, detail="Prediction failed — insufficient data.")
+        raise HTTPException(status_code=500, detail="Prediction failed, insufficient data.")
     return result
 
 
@@ -350,8 +337,6 @@ def run_prediction_now():
 # YEAH, I LOVE OLLAMA <3 - PIXL
 @app.post("/LLM", dependencies=[Depends(_require_llm_origin)])
 async def llm_chat(request: Request, body: ChatRequest):
-    """Chat con el modelo LLM local (Ollama) usando RAG sobre datos electorales."""
-
     async def generate():
         ollama_client = httpx.AsyncClient(
             timeout=None,
@@ -363,7 +348,7 @@ async def llm_chat(request: Request, body: ChatRequest):
             while True:
                 await asyncio.sleep(0.4)
                 if await request.is_disconnected():
-                    logger.info("[LLM] Cliente desconectado → abortando generación en Ollama")
+                    logger.info("[LLM] Client disconnected, canceling Ollama stream")
                     await ollama_client.aclose()
                     return
 
@@ -376,7 +361,7 @@ async def llm_chat(request: Request, body: ChatRequest):
             context = await rag_engine.get_context(last_user, k=8)
 
             if await request.is_disconnected():
-                logger.info("[LLM] Cliente desconectado antes de llamar a Ollama")
+                logger.info("[LLM] Client disconnected before calling Ollama")
                 return
 
             system_content = SYSTEM_PROMPT.format(context=context)
@@ -413,14 +398,14 @@ async def llm_chat(request: Request, body: ChatRequest):
                         break
 
             await ollama_client.aclose()
-            logger.debug("[LLM] Conexión Ollama cerrada tras done:true")
+            logger.debug("[LLM] Ollama connection closed after generating response")
 
             if stream_done:
                 yield _sse({"type": "done"})
                 return
 
         except (httpx.RemoteProtocolError, httpx.ReadError, httpx.StreamClosed):
-            logger.info("[LLM] Stream Ollama interrumpido por desconexión del cliente")
+            logger.info("[LLM] Ollama stream interrupted due to client disconnection")
         except Exception as exc:
             logger.error("[LLM] Error: %s", exc)
             try:
@@ -435,7 +420,7 @@ async def llm_chat(request: Request, body: ChatRequest):
                     await cancel_task
                 except asyncio.CancelledError:
                     pass
-            logger.debug("[LLM] ollama_client cerrado")
+            logger.debug("[LLM] ollama_client closed")
 
     return StreamingResponse(
         generate(),

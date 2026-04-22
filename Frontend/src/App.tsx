@@ -12,6 +12,7 @@ const AboutPage = lazy(() => import('./pages/AboutPage'));
 const APIPage = lazy(() => import('./pages/APIPage'));
 const UbigeoPage = lazy(() => import('./pages/UbigeoPage'));
 const ChatPage = lazy(() => import('./pages/ChatPage'));
+const ActasPage = lazy(() => import('./pages/ActasPage'));
 const ResultadosPeru2026 = lazy(() => import('./pages/ResultadosPeru2026'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
@@ -25,6 +26,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/about': 'Acerca de',
   '/API_DOCS': 'API Documentation',
   '/ubigeo': 'Códigos UBIGEO',
+  '/actas': 'Actas Electorales',
   '/resultados-elecciones-peru-2026': 'Resultados en tiempo real de las elecciones Perú 2026',
 };
 
@@ -88,7 +90,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <TitleUpdater />
-      <div className="max-w-[1200px] mx-auto px-5 py-4">
+      <div className="max-w-[1600px] mx-auto px-5 py-4">
         <Navbar />
         <Suspense fallback={null}>
           <Routes>
@@ -101,6 +103,7 @@ export default function App() {
             <Route path="/chat" element={<ChatPage />} />
             <Route path="/API_DOCS" element={<APIPage />} />
             <Route path="/ubigeo" element={<UbigeoPage />} />
+            <Route path="/actas" element={<ActasPage />} />
             <Route path="/resultados-elecciones-peru-2026" element={<ResultadosPeru2026 />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

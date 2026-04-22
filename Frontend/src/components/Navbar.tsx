@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
-import { BarChart3, Map, Users, History, Target, Info, Code2, MessageSquare, Menu, X, Radio } from 'lucide-react';
+import { BarChart3, Map, Users, History, Target, Info, Code2, MessageSquare, Menu, X, Radio, FileText } from 'lucide-react';
 
 export default function Navbar() {
   const [open, setOpen] = useState(false);
@@ -31,6 +31,10 @@ export default function Navbar() {
           <NavLink to="/prediccion" className={linkClass}>
             <Target size={15} />
             Predicción
+          </NavLink>
+          <NavLink to="/actas" className={linkClass}>
+            <FileText size={15} />
+            Actas
           </NavLink>
           <NavLink to="/historial" className={linkClass}>
             <History size={15} />
@@ -144,6 +148,14 @@ export default function Navbar() {
           >
             <Info size={15} />
             Acerca De
+          </NavLink>
+          <NavLink
+            to="/actas"
+            className={linkClass}
+            onClick={() => setOpen(false)}
+          >
+            <FileText size={15} />
+            Actas
           </NavLink>
           <NavLink
             to="/API_DOCS"

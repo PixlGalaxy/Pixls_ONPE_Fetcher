@@ -175,6 +175,14 @@ def _participantes_url(election_id: int, extra_params: str) -> str:
 
 # ── Public API ─────────────────────────────────────────────────────────────
 
+def fetch_national_totales_only(election_key: str) -> dict:
+    cfg = ELECTIONS[election_key]
+    eid = cfg["id"]
+    params = cfg["national_filter"]
+    totales = _browser_fetch(_totales_url(eid, params))
+    return totales.get("data", {})
+
+
 def fetch_national(election_key: str) -> dict:
     """
     Fetch national totals + candidates for *election_key*.

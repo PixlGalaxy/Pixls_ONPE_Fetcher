@@ -10,13 +10,14 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
+import actas_controller
 import scheduler
 import storage
 import predictor
-from config import DATA_DIR, ELECTIONS
+from config import BASE_DIR, DATA_DIR, ELECTIONS
 from AI.rag import rag_engine
 
 load_dotenv(Path(__file__).parent / ".env")
@@ -122,11 +123,13 @@ def _sse(payload: dict) -> str:
 async def lifespan(app: FastAPI):
     _configure_uvicorn_logging()
     logger.info("Backend starting up…")
+    actas_controller.start()
     scheduler.start()
     asyncio.create_task(rag_engine.initialize())
     yield
     logger.info("Backend shutting down…")
     scheduler.stop()
+    actas_controller.stop()
 
 
 # ── App ────────────────────────────────────────────────────────────────────
@@ -316,6 +319,55 @@ def force_fetch():
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Fetch failed: {exc}") from exc
     return {"status": "ok", "message": "Full refresh completed."}
+
+
+# ── Actas ─────────────────────────────────────────────────────────────────
+
+_ACTAS_DIR = BASE_DIR / "Actas_Data"
+
+
+def _safe_actas_path(rel: str) -> Path:
+    target = (_ACTAS_DIR / rel).resolve()
+    if not str(target).startswith(str(_ACTAS_DIR.resolve())):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    return target
+
+
+@app.get("/actas/status")
+def actas_status():
+    return actas_controller.get_status()
+
+
+@app.get("/actas/browse")
+@app.get("/actas/browse/{rel_path:path}")
+def actas_browse(rel_path: str = ""):
+    base = _ACTAS_DIR.resolve()
+    target = _safe_actas_path(rel_path) if rel_path else base
+    if not target.exists():
+        raise HTTPException(status_code=404, detail="Path not found")
+    if not target.is_dir():
+        raise HTTPException(status_code=400, detail="Not a directory; use /actas/file/…")
+    items = []
+    for entry in sorted(target.iterdir()):
+        stat = entry.stat()
+        items.append({
+            "name":     entry.name,
+            "type":     "dir" if entry.is_dir() else "file",
+            "size":     stat.st_size if entry.is_file() else None,
+            "rel_path": entry.relative_to(base).as_posix(),
+        })
+    return {
+        "path":  target.relative_to(base).as_posix() if target != base else "",
+        "items": items,
+    }
+
+
+@app.get("/actas/file/{rel_path:path}")
+def actas_file(rel_path: str):
+    target = _safe_actas_path(rel_path)
+    if not target.exists() or not target.is_file():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(target)
 
 
 # ── Predictions ───────────────────────────────────────────────────────────

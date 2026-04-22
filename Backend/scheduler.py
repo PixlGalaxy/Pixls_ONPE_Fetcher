@@ -204,6 +204,11 @@ def _scheduler_loop() -> None:
                 logger.warning("[SCHEDULER] Could not read actas %, will retry next tick.")
             else:
                 logger.info("[SCHEDULER] Quick check: actas=%.3f%%", current_pct)
+                try:
+                    import actas_controller
+                    actas_controller.notify_pct_change(current_pct)
+                except Exception as exc:
+                    logger.warning("[SCHEDULER] actas notify failed: %s", exc)
                 with _lock:
                     prev = _last_known_pct
 

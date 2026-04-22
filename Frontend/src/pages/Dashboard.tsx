@@ -269,7 +269,7 @@ export default function Dashboard() {
           >
             <FileText size={13} />
             JEE: <span className="font-mono">{actas.actas_enviadas_jee.toLocaleString('es-PE')}</span>
-            <span className="font-normal" style={{ color: 'var(--tx3)' }}>
+            <span className="font-mono">
               ({((actas.actas_enviadas_jee / actas.actas_total) * 100).toFixed(1)}%)
             </span>
           </div>

@@ -65,6 +65,7 @@ def _fetch_and_store_national(election_key: str) -> Optional[float]:
     prev_pct = meta.get("elections", {}).get(election_key, {}).get("last_actas_pct")
     if prev_pct is None or abs(pct - prev_pct) >= MIN_PCT_CHANGE_TO_SAVE:
         storage.save_history_snapshot(election_key, snapshot, pct)
+        storage.build_and_save_timeline(election_key)
         meta["elections"][election_key]["snapshot_count"] = (
             meta["elections"][election_key].get("snapshot_count", 0) + 1
         )

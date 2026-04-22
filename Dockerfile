@@ -10,11 +10,12 @@ RUN npm run build
 FROM python:3.12-alpine
 WORKDIR /app
 
-# Install Nginx + Chromium + ChromeDriver
+# Install Nginx + Chromium + ChromeDriver + NTP para evitar clock skew en WSL2
 RUN apk add --no-cache \
     nginx \
     chromium \
     chromium-chromedriver \
+    openntpd \
     && rm -rf /var/cache/apk/*
 
 # Set Chrome env vars for Selenium
@@ -36,4 +37,4 @@ COPY Backend/ /app/backend/
 
 EXPOSE 5000
 
-CMD ["sh", "-c", "cd /app/backend && uvicorn main:app --host 0.0.0.0 --port 8000 & nginx -g 'daemon off;'"]
+CMD ["sh", "-c", "ntpd -d -n -s -p pool.ntp.org 2>/dev/null || true; cd /app/backend && uvicorn main:app --host 0.0.0.0 --port 8000 & nginx -g 'daemon off;'"]

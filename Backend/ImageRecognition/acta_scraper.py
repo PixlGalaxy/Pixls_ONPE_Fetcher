@@ -456,7 +456,8 @@ class ActaScraper:
 
     # ── Location pipeline ─────────────────────────────────────────────────────
 
-    DOWNLOAD_WORKERS = 50
+    DOWNLOAD_WORKERS = 8
+    CHUNK_SIZE = 10
 
     def process_location(
         self,
@@ -517,8 +518,7 @@ class ActaScraper:
                     )
                 pending_files.append((id_eleccion, elec_folder, codigo_mesa, arch, dest_path, filename))
 
-        need_url  = []
-        tasks: List[Tuple] = []
+        need_url: List[int] = []
 
         for idx, (id_elec, elec_folder, mesa, arch, dest_path, filename) in enumerate(pending_files):
             if dest_path.exists():
@@ -527,28 +527,7 @@ class ActaScraper:
             else:
                 need_url.append(idx)
 
-        s3_urls_raw = self._api_batch_get(
-            [f"{API_BASE}/actas/file?id={pending_files[i][3].file_id}" for i in need_url]
-        )
-
-        for idx, resp in zip(need_url, s3_urls_raw):
-            _, elec_folder, mesa, arch, dest_path, filename = pending_files[idx]
-            s3_url = None
-            if isinstance(resp, dict):
-                s3_url = resp.get("data") or resp.get("url") or resp.get("link")
-                s3_url = str(s3_url) if s3_url else None
-
-            if not s3_url:
-                self._log_dl(scope, n1, n2, n3, elec_folder, mesa,
-                             arch.description, arch.file_id, "", filename, "NO_URL")
-                with self._lock:
-                    self.state.total_errors += 1
-                continue
-
-            tasks.append((s3_url, dest_path, elec_folder, mesa,
-                          arch.description, arch.file_id, filename))
-
-        if not tasks:
+        if not need_url:
             self.state.mark_done(key)
             self._save_state()
             return 0
@@ -561,19 +540,49 @@ class ActaScraper:
         downloaded  = 0
         retry_tasks = []
 
-        with ThreadPoolExecutor(max_workers=self.DOWNLOAD_WORKERS) as pool:
-            futures = {pool.submit(_do_download, t): t for t in tasks}
-            for future in as_completed(futures):
-                ok, task = future.result()
-                _, dest_path, elec_folder, mesa, description, file_id, filename = task
-                if ok:
+        for chunk_start in range(0, len(need_url), self.CHUNK_SIZE):
+            chunk_indices = need_url[chunk_start : chunk_start + self.CHUNK_SIZE]
+
+            s3_urls_chunk = self._api_batch_get(
+                [f"{API_BASE}/actas/file?id={pending_files[i][3].file_id}"
+                 for i in chunk_indices]
+            )
+
+            chunk_tasks = []
+            for i, resp in zip(chunk_indices, s3_urls_chunk):
+                _, elec_folder, mesa, arch, dest_path, filename = pending_files[i]
+                s3_url = None
+                if isinstance(resp, dict):
+                    s3_url = resp.get("data") or resp.get("url") or resp.get("link")
+                    s3_url = str(s3_url) if s3_url else None
+
+                if not s3_url:
                     self._log_dl(scope, n1, n2, n3, elec_folder, mesa,
-                                 description, file_id, str(dest_path), filename, "OK")
+                                 arch.description, arch.file_id, "", filename, "NO_URL")
                     with self._lock:
-                        downloaded += 1
-                        self.state.total_downloaded += 1
-                else:
-                    retry_tasks.append(task)
+                        self.state.total_errors += 1
+                    continue
+
+                chunk_tasks.append((s3_url, dest_path, elec_folder, mesa,
+                                    arch.description, arch.file_id, filename))
+
+            if not chunk_tasks:
+                continue
+
+            workers = min(self.DOWNLOAD_WORKERS, len(chunk_tasks))
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                futures = {pool.submit(_do_download, t): t for t in chunk_tasks}
+                for future in as_completed(futures):
+                    ok, task = future.result()
+                    _, dest_path, elec_folder, mesa, description, file_id, filename = task
+                    if ok:
+                        self._log_dl(scope, n1, n2, n3, elec_folder, mesa,
+                                     description, file_id, str(dest_path), filename, "OK")
+                        with self._lock:
+                            downloaded += 1
+                            self.state.total_downloaded += 1
+                    else:
+                        retry_tasks.append(task)
 
         for task in retry_tasks:
             _, dest_path, elec_folder, mesa, description, file_id, filename = task

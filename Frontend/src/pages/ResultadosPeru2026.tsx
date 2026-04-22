@@ -24,6 +24,12 @@ export default function ResultadosPeru2026() {
   return (
     <div style={{ textAlign: 'center', marginTop: '4rem' }}>
       <h1>Resultados en tiempo real de las elecciones Perú 2026</h1>
+      <img
+        src="/preview.png"
+        alt="Vista previa resultados elecciones Perú 2026"
+        style={{ maxWidth: '100%', height: 'auto', margin: '2rem auto', borderRadius: '12px', boxShadow: '0 2px 16px #0002' }}
+        loading="eager"
+      />
       <p>Redirigiendo al dashboard de resultados...</p>
     </div>
   );

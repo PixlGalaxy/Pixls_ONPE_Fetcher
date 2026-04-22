@@ -438,7 +438,7 @@ class ActaScraper:
         }
         for attempt in range(1, self.max_retries + 1):
             try:
-                resp = requests.get(s3_url, headers=headers, stream=True, timeout=60)
+                resp = self._session.get(s3_url, headers=headers, stream=True, timeout=60)
                 if resp.status_code == 200:
                     dest_path.parent.mkdir(parents=True, exist_ok=True)
                     with open(dest_path, "wb") as f:

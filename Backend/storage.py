@@ -85,7 +85,18 @@ def save_metadata(meta: dict) -> None:
 # ── National snapshots ────────────────────────────────────────────────────
 
 def save_current(election_key: str, snapshot: dict) -> None:
-    _write(_election_dir(election_key) / "current.json", snapshot)
+    path = _election_dir(election_key) / "current.json"
+    existing = _read(path)
+    if existing:
+        existing_time = existing.get("snapshot_time", "")
+        new_time = snapshot.get("snapshot_time", "")
+        if existing_time and new_time and existing_time > new_time:
+            logger.warning(
+                "[STORED] Skipping stale write for %s (existing=%s > new=%s)",
+                election_key, existing_time, new_time,
+            )
+            return
+    _write(path, snapshot)
     logger.info("[STORED] %s/current.json", election_key)
 
 

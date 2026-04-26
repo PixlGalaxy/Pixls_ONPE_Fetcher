@@ -497,6 +497,16 @@ class ActaScraper:
 
     DOWNLOAD_WORKERS = 50
 
+    @staticmethod
+    def _is_valid_pdf(path: Path) -> bool:
+        if not path.exists() or path.stat().st_size < 5:
+            return False
+        try:
+            with open(path, "rb") as f:
+                return f.read(5) == b"%PDF-"
+        except OSError:
+            return False
+
     def process_location(
         self,
         scope: str,
@@ -506,9 +516,6 @@ class ActaScraper:
         amb: int = AMB_PERU,
     ) -> int:
         key = f"{scope}/{n1}/{n2}/{n3}"
-        if self.state.is_done(key):
-            self.state.total_skipped += 1
-            return 0
 
         actas_by_election = self.get_acta_ids_by_election(ubigeo, amb)
         total_actas = sum(len(v) for v in actas_by_election.values())
@@ -560,7 +567,7 @@ class ActaScraper:
         tasks: List[Tuple] = []
 
         for idx, (id_elec, elec_folder, mesa, arch, dest_path, filename) in enumerate(pending_files):
-            if dest_path.exists():
+            if self._is_valid_pdf(dest_path):
                 self._log_dl(scope, n1, n2, n3, elec_folder, mesa,
                              arch.description, arch.file_id, str(dest_path), filename, "SKIP")
             else:
@@ -664,28 +671,15 @@ class ActaScraper:
             return
 
         total = len(districts)
-        already_done = sum(
-            1 for (dn, _, pn, _, dist_n, _) in districts
-            if self.state.is_done(f"Peru/{dn}/{pn}/{dist_n}")
-        )
-        pending = total - already_done
-
-        logger.info(
-            "Total districts: %d  |  Already done: %d  |  Pending: %d",
-            total, already_done, pending,
-        )
+        logger.info("Total districts: %d", total)
 
         start_ts   = time.monotonic()
         done_count = 0
 
         for dep_name, _, prov_name, _, dist_name, dist_ubi in districts:
-            key = f"Peru/{dep_name}/{prov_name}/{dist_name}"
-            if self.state.is_done(key):
-                continue
-
             logger.info(
                 "[%d/%d] %s > %s > %s",
-                already_done + done_count + 1, total,
+                done_count + 1, total,
                 dep_name, prov_name, dist_name,
             )
 
@@ -696,16 +690,17 @@ class ActaScraper:
             done_count += 1
             elapsed   = time.monotonic() - start_ts
             avg_secs  = elapsed / done_count
-            remaining = pending - done_count
+            remaining = total - done_count
             eta_secs  = int(avg_secs * remaining)
             eta_str   = str(timedelta(seconds=eta_secs))
             dist_secs = time.monotonic() - dist_start
 
             logger.info(
-                "    -> %d files in %.1fs  |  %d/%d pending  |  ETA: %s  |  Total downloaded: %d",
-                n, dist_secs, remaining, pending, eta_str, self.state.total_downloaded,
+                "    -> %d files in %.1fs  |  %d remaining  |  ETA: %s  |  Total downloaded: %d",
+                n, dist_secs, remaining, eta_str, self.state.total_downloaded,
             )
 
+        self.retry_errors_from_csv()
         logger.info("=== Peru complete. Total: %d ===", self.state.total_downloaded)
 
     # ── Main loop: Abroad ─────────────────────────────────────────────────────
@@ -748,7 +743,83 @@ class ActaScraper:
                 )
                 logger.info("    [OK] %d files.", n)
 
+        self.retry_errors_from_csv()
         logger.info("=== Abroad complete. Total: %d ===", self.state.total_downloaded)
+
+    # ── CSV error retry ───────────────────────────────────────────────────────
+
+    def retry_errors_from_csv(self) -> int:
+        if not self._log_path.exists():
+            return 0
+
+        error_rows = []
+        ok_ids: set = set()
+
+        with open(self._log_path, encoding="utf-8", newline="") as f:
+            for row in csv.DictReader(f):
+                if row["status"] in ("OK", "SKIP"):
+                    ok_ids.add(row["file_id"])
+                elif row["status"] in ("ERROR", "NO_URL"):
+                    error_rows.append(dict(row))
+
+        to_retry = [
+            r for r in error_rows
+            if r["file_id"] not in ok_ids
+            and not self._is_valid_pdf(
+                Path(r["local_path"]) if r["local_path"] else Path("__nonexistent__")
+            )
+        ]
+
+        if not to_retry:
+            logger.info("CSV retry: nothing to retry.")
+            return 0
+
+        logger.info("CSV retry: %d error entries to retry.", len(to_retry))
+        fixed = 0
+
+        for row in to_retry:
+            file_id   = row["file_id"]
+            scope     = row["scope"]
+            n1        = row["level1"]
+            n2        = row["level2"]
+            n3        = row["level3"]
+            election  = row["election"]
+            mesa      = row["mesa"]
+            acta_type = row["acta_type"]
+            filename  = row["filename"]
+            dest_path = (
+                Path(row["local_path"])
+                if row["local_path"]
+                else self._session_base(scope, n1, n2, n3) / election / filename
+            )
+
+            if self._is_valid_pdf(dest_path):
+                continue
+
+            logger.info("  retry: %s / %s / %s", election, mesa, filename)
+
+            s3_url = self.get_s3_url(file_id)
+            ok = False
+            if s3_url:
+                ok = self.download_from_s3(s3_url, dest_path)
+                if not ok:
+                    ok = self._download_via_browser(s3_url, dest_path)
+
+            status = "OK" if ok else "ERROR"
+            self._log_dl(scope, n1, n2, n3, election, mesa, acta_type, file_id,
+                         str(dest_path), filename, status)
+
+            if ok:
+                fixed += 1
+                with self._lock:
+                    self.state.total_downloaded += 1
+            else:
+                with self._lock:
+                    self.state.total_errors += 1
+
+        logger.info("CSV retry complete: %d fixed.", fixed)
+        self._save_state()
+        return fixed
 
     # ── Discovery mode ────────────────────────────────────────────────────────
 
